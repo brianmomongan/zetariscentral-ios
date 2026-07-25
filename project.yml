@@ -1,0 +1,31 @@
+name: ZetarisCentral
+options:
+  bundleIdPrefix: com.zetaris
+  deploymentTarget:
+    iOS: "16.0"
+  createIntermediateGroups: true
+
+targets:
+  ZetarisCentral:
+    type: application
+    platform: iOS
+    sources:
+      - ZetarisCentral
+    settings:
+      base:
+        PRODUCT_BUNDLE_IDENTIFIER: com.zetaris.central
+        MARKETING_VERSION: "0.1.0"
+        CURRENT_PROJECT_VERSION: "1"
+        GENERATE_INFOPLIST_FILE: NO
+        TARGETED_DEVICE_FAMILY: "1,2"
+        SWIFT_VERSION: "5.0"
+    info:
+      path: ZetarisCentral/Info.plist
+      properties:
+        CFBundleDisplayName: Zetaris Central
+        UILaunchScreen: {}
+        UIApplicationSceneManifest:
+          UIApplicationSupportsMultipleScenes: false
+        # Dev only: allow plaintext HTTP to the local backend (localhost).
+        NSAppTransportSecurity:
+          NSAllowsLocalNetworking: true
