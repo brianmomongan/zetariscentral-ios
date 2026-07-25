@@ -108,6 +108,65 @@ struct CommentResponse: Codable {
     let comment: CreatedComment
 }
 
+// MARK: - Messages
+
+struct Member: Codable, Identifiable {
+    let id: String
+    let name: String
+    let email: String?
+    let username: String?
+    let avatarUrl: String?
+}
+
+struct ConversationSummary: Codable, Identifiable {
+    let id: String
+    let isGroup: Bool
+    let title: String
+    let members: [Member]
+    let lastMessage: String?
+    let lastMessageAt: Date
+    let unread: Int
+}
+
+struct ConversationsResponse: Codable {
+    let conversations: [ConversationSummary]
+}
+
+struct ChatFile: Codable {
+    let id: String
+    let name: String
+    let size: Int?
+    let mimeType: String?
+}
+
+struct ChatMessage: Codable, Identifiable {
+    let id: String
+    let body: String
+    let imageUrl: String?
+    let createdAt: Date
+    let senderId: String
+    let sender: Member
+    let file: ChatFile?
+}
+
+struct ConversationDetail: Codable {
+    let id: String
+    let isGroup: Bool
+    let name: String?
+    let title: String
+    let members: [Member]
+    let readReceipt: Date?
+    let messages: [ChatMessage]
+}
+
+struct ConversationResponse: Codable {
+    let conversation: ConversationDetail
+}
+
+struct MessagesResponse: Codable {
+    let messages: [ChatMessage]
+}
+
 struct CreatedPost: Codable {
     let id: String
     let content: String
