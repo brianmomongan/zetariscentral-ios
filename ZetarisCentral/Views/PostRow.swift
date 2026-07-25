@@ -60,6 +60,7 @@ struct PostRow: View {
 struct AvatarView: View {
     let name: String
     let url: String?
+    var size: CGFloat = 40
 
     var body: some View {
         Group {
@@ -73,7 +74,7 @@ struct AvatarView: View {
                 initialsCircle
             }
         }
-        .frame(width: 40, height: 40)
+        .frame(width: size, height: size)
         .clipShape(Circle())
     }
 

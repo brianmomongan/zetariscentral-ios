@@ -62,10 +62,50 @@ struct Post: Codable, Identifiable {
     let reactions: Reactions
     let commentCount: Int
     let bookmarkedByMe: Bool
+    let comments: [Comment]?   // present only on the post-detail endpoint
+}
+
+struct Comment: Codable, Identifiable {
+    let id: String
+    let content: String
+    let createdAt: Date
+    let editedAt: Date?
+    let author: Author
+    let images: [String]
+    let likeCount: Int
+    let likedByMe: Bool
+    let replies: [Comment]?    // present only on root comments
 }
 
 struct FeedResponse: Codable {
     let posts: [Post]
+}
+
+struct PostDetailResponse: Codable {
+    let post: Post
+}
+
+struct ReactResponse: Codable {
+    let mine: String?
+}
+
+struct BookmarkResponse: Codable {
+    let bookmarked: Bool
+}
+
+struct LikeResponse: Codable {
+    let liked: Bool
+}
+
+struct CreatedComment: Codable {
+    let id: String
+    let content: String
+    let parentId: String?
+    let createdAt: Date
+}
+
+struct CommentResponse: Codable {
+    let comment: CreatedComment
 }
 
 struct CreatedPost: Codable {

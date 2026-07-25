@@ -44,10 +44,15 @@ struct FeedView: View {
                     ContentUnavailableViewCompat(title: "Couldn't load", message: error)
                 } else {
                     List(model.posts) { post in
-                        PostRow(post: post)
-                            .listRowSeparator(.hidden)
+                        NavigationLink(value: post.id) {
+                            PostRow(post: post)
+                        }
+                        .listRowSeparator(.hidden)
                     }
                     .listStyle(.plain)
+                    .navigationDestination(for: String.self) { postId in
+                        PostDetailView(postId: postId)
+                    }
                     .refreshable { await model.load() }
                 }
             }

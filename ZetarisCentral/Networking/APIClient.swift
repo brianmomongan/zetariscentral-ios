@@ -50,6 +50,17 @@ struct APIClient {
         try await request(path, method: "POST", body: body, auth: auth)
     }
 
+    /// POST with no request body (for toggle-style endpoints).
+    @discardableResult
+    func post<T: Decodable>(_ path: String, auth: Bool = true) async throws -> T {
+        try await request(path, method: "POST", body: Optional<Int>.none, auth: auth)
+    }
+
+    @discardableResult
+    func delete<T: Decodable>(_ path: String, auth: Bool = true) async throws -> T {
+        try await request(path, method: "DELETE", body: Optional<Int>.none, auth: auth)
+    }
+
     private func request<T: Decodable, B: Encodable>(
         _ path: String, method: String, body: B?, auth: Bool
     ) async throws -> T {
