@@ -17,6 +17,8 @@ struct MainTabView: View {
         TabView {
             FeedView()
                 .tabItem { Label("Home", systemImage: "house") }
+            NotificationsView()
+                .tabItem { Label("Activity", systemImage: "bell") }
             ConversationsView()
                 .tabItem { Label("Messages", systemImage: "message") }
         }

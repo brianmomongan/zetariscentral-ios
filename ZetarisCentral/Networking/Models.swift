@@ -167,6 +167,30 @@ struct MessagesResponse: Codable {
     let messages: [ChatMessage]
 }
 
+// MARK: - Notifications
+
+struct NotificationEvent: Codable {
+    let id: String
+    let title: String
+}
+
+struct AppNotification: Codable, Identifiable {
+    let id: String
+    let type: String
+    let read: Bool
+    let createdAt: Date
+    let actor: Author
+    let postId: String?
+    let conversationId: String?
+    let eventId: String?
+    let event: NotificationEvent?
+}
+
+struct NotificationsResponse: Codable {
+    let notifications: [AppNotification]
+    let unread: Int
+}
+
 struct CreatedPost: Codable {
     let id: String
     let content: String
