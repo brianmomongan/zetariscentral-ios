@@ -19,6 +19,10 @@ targets:
         GENERATE_INFOPLIST_FILE: NO
         TARGETED_DEVICE_FAMILY: "1,2"
         SWIFT_VERSION: "5.0"
+        # Entitlements grant the Keychain access group so the session token
+        # persists across launches (without this, SecItemAdd fails -34018 on
+        # unsigned/simulator builds and users get logged out every cold start).
+        CODE_SIGN_ENTITLEMENTS: ZetarisCentral/ZetarisCentral.entitlements
     info:
       path: ZetarisCentral/Info.plist
       properties:

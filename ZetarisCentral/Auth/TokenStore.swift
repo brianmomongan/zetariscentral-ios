@@ -27,6 +27,7 @@ final class TokenStore {
         SecItemDelete(query as CFDictionary)
         var attributes = query
         attributes[kSecValueData as String] = data
+        attributes[kSecAttrAccessible as String] = kSecAttrAccessibleAfterFirstUnlock
         SecItemAdd(attributes as CFDictionary, nil)
     }
 
