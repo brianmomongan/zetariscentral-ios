@@ -24,6 +24,8 @@ struct ZetarisCentralApp: App {
                         case "directory", "people": route = .directory
                         case "saved": route = .saved
                         case "news": route = .news
+                        case "profile": route = q.isEmpty ? nil : .profile(q)
+                        case "group": route = q.isEmpty ? nil : .group(q)
                         default: route = nil
                         }
                         if let route {

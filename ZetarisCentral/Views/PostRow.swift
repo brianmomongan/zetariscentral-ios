@@ -186,7 +186,6 @@ struct PostRow: View {
             }
             .font(.footnote)
         }
-        .padding(.vertical, 6)
         .sheet(item: $fileToView) { ref in FileViewerSheet(fileId: ref.id, name: ref.name) }
     }
 

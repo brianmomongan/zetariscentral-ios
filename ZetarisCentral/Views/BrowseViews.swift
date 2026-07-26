@@ -12,11 +12,7 @@ struct SavedView: View {
             } else if posts.isEmpty {
                 EmptyStateView(title: "Nothing saved yet.", subtitle: "Tap Save on a post to keep it here.")
             } else {
-                List(posts) { post in
-                    NavigationLink(value: AppRoute.post(post.id)) { PostRow(post: post) }
-                        .listRowSeparator(.hidden)
-                }
-                .listStyle(.plain)
+                PostCardList(posts: posts)
             }
         }
         .navigationTitle("Saved")
@@ -40,11 +36,7 @@ struct TagView: View {
             } else if posts.isEmpty {
                 EmptyStateView(title: "No posts", subtitle: "Nothing tagged #\(tag) yet.")
             } else {
-                List(posts) { post in
-                    NavigationLink(value: AppRoute.post(post.id)) { PostRow(post: post) }
-                        .listRowSeparator(.hidden)
-                }
-                .listStyle(.plain)
+                PostCardList(posts: posts)
             }
         }
         .navigationTitle("#\(tag)")

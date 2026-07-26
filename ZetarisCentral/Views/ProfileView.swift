@@ -58,20 +58,28 @@ struct ProfileView: View {
                             Task { if let id = await model.startDM() { openConvo = IdentifiedString(value: id) } }
                         })
                             .listRowInsets(EdgeInsets(top: 16, leading: 16, bottom: 12, trailing: 16))
+                            .listRowBackground(Color.clear)
                     }
                     Section("Posts") {
                         if model.posts.isEmpty {
                             Text("No posts yet.").font(.subheadline).foregroundStyle(.secondary)
+                                .listRowBackground(Color.clear)
                         } else {
                             ForEach(model.posts) { post in
-                                NavigationLink(value: AppRoute.post(post.id)) {
-                                    PostRow(post: post)
+                                ZStack {
+                                    NavigationLink(value: AppRoute.post(post.id)) { EmptyView() }.opacity(0)
+                                    PostRow(post: post).postCard(announcement: post.isAnnouncement)
                                 }
+                                .listRowInsets(EdgeInsets(top: 6, leading: 12, bottom: 6, trailing: 12))
+                                .listRowSeparator(.hidden)
+                                .listRowBackground(Color.clear)
                             }
                         }
                     }
                 }
                 .listStyle(.plain)
+                .scrollContentBackground(.hidden)
+                .background(Theme.sunken)
                 .refreshable { await model.load() }
             } else {
                 ContentUnavailableViewCompat(title: "Unavailable", message: model.errorMessage ?? "This profile can't be shown.")

@@ -60,6 +60,7 @@ struct SpaceDetailView: View {
                     Section {
                         SpaceHeader(space: data.space, members: data.members, model: model)
                             .listRowInsets(EdgeInsets(top: 12, leading: 16, bottom: 12, trailing: 16))
+                            .listRowBackground(Color.clear)
                     }
                     if !data.events.isEmpty {
                         Section("Upcoming events") {
@@ -67,22 +68,30 @@ struct SpaceDetailView: View {
                                 NavigationLink(value: AppRoute.event(event.id)) {
                                     EventRow(event: event)
                                 }
+                                .listRowBackground(Color.clear)
                             }
                         }
                     }
                     Section("Posts") {
                         if data.posts.isEmpty {
                             Text("No posts in this space yet.").font(.subheadline).foregroundStyle(.secondary)
+                                .listRowBackground(Color.clear)
                         } else {
                             ForEach(data.posts) { post in
-                                NavigationLink(value: AppRoute.post(post.id)) {
-                                    PostRow(post: post)
+                                ZStack {
+                                    NavigationLink(value: AppRoute.post(post.id)) { EmptyView() }.opacity(0)
+                                    PostRow(post: post).postCard(announcement: post.isAnnouncement)
                                 }
+                                .listRowInsets(EdgeInsets(top: 6, leading: 12, bottom: 6, trailing: 12))
+                                .listRowSeparator(.hidden)
+                                .listRowBackground(Color.clear)
                             }
                         }
                     }
                 }
                 .listStyle(.plain)
+                .scrollContentBackground(.hidden)
+                .background(Theme.sunken)
                 .refreshable { await model.load() }
             } else {
                 ContentUnavailableViewCompat(title: "Unavailable", message: model.errorMessage ?? "This space can't be shown.")

@@ -64,13 +64,18 @@ struct FeedView: View {
                         EmptyStateView(title: model.filter == "following" ? "No posts from people you follow." : "No posts yet.",
                                        subtitle: model.filter == "following" ? "Follow people to see their posts here." : "Tap the pencil to share something.")
                     } else {
-                        List(model.posts) { post in
-                            NavigationLink(value: AppRoute.post(post.id)) {
-                                PostRow(post: post)
+                        ScrollView {
+                            LazyVStack(spacing: 12) {
+                                ForEach(model.posts) { post in
+                                    NavigationLink(value: AppRoute.post(post.id)) {
+                                        PostRow(post: post).postCard(announcement: post.isAnnouncement)
+                                    }
+                                    .buttonStyle(.plain)
+                                }
                             }
-                            .listRowSeparator(.hidden)
+                            .padding(12)
                         }
-                        .listStyle(.plain)
+                        .background(Theme.sunken)
                         .refreshable { await model.load() }
                     }
                 }

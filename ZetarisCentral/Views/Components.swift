@@ -55,6 +55,27 @@ struct VideoPlayerView: View {
     }
 }
 
+/// A vertically-scrolling list of post cards on the sunken page background —
+/// the shared feed/Saved/Tag presentation. Must live inside a NavigationStack
+/// that handles `AppRoute`.
+struct PostCardList: View {
+    let posts: [Post]
+    var body: some View {
+        ScrollView {
+            LazyVStack(spacing: 12) {
+                ForEach(posts) { post in
+                    NavigationLink(value: AppRoute.post(post.id)) {
+                        PostRow(post: post).postCard(announcement: post.isAnnouncement)
+                    }
+                    .buttonStyle(.plain)
+                }
+            }
+            .padding(12)
+        }
+        .background(Theme.sunken)
+    }
+}
+
 /// Identifiable String wrapper for `.sheet(item:)`.
 struct IdentifiedString: Identifiable { let value: String; var id: String { value } }
 
