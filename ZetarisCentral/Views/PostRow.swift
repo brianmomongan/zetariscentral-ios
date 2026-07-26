@@ -26,12 +26,22 @@ struct PostRow: View {
     @State private var mine: String?
     @State private var total: Int
     @State private var bookmarked: Bool
+    @State private var fileToView: FileRef?
 
     init(post: Post) {
         self.post = post
         _mine = State(initialValue: post.reactions.mine)
         _total = State(initialValue: post.reactions.total)
         _bookmarked = State(initialValue: post.bookmarkedByMe)
+    }
+
+    // Body with internal file links (/f/<id>) removed — shown as the chip instead.
+    private var bodyText: String {
+        post.content.components(separatedBy: .whitespacesAndNewlines).filter { !$0.contains("/f/") }.joined(separator: " ").trimmingCharacters(in: .whitespaces)
+    }
+    private var fileLink: LinkCard? { post.link.flatMap { $0.url.contains("/f/") ? $0 : nil } }
+    private func fileId(_ link: LinkCard) -> String {
+        (link.url.split(separator: "/").last.map(String.init) ?? "").components(separatedBy: "?").first ?? ""
     }
 
     var body: some View {
@@ -63,8 +73,26 @@ struct PostRow: View {
                 Spacer()
             }
 
-            if !post.content.isEmpty {
-                RichText(post.content)
+            if !bodyText.isEmpty {
+                RichText(bodyText)
+            }
+
+            if let link = fileLink {
+                Button {
+                    fileToView = FileRef(id: fileId(link), name: link.title ?? "file")
+                } label: {
+                    HStack(spacing: 8) {
+                        Image(systemName: (link.image?.isEmpty == false) ? "photo" : "doc.text")
+                        Text(link.title ?? "File").font(.subheadline.weight(.medium)).lineLimit(1)
+                        if let size = link.description?.components(separatedBy: " · ").first, !size.isEmpty {
+                            Text("· \(size)").font(.caption).foregroundStyle(.secondary)
+                        }
+                        Spacer()
+                    }
+                    .padding(.horizontal, 12).padding(.vertical, 8)
+                    .background(.quaternary, in: Capsule())
+                }
+                .buttonStyle(.borderless)
             }
 
             if !post.images.isEmpty {
@@ -91,7 +119,7 @@ struct PostRow: View {
                 }
             }
 
-            if let link = post.link {
+            if let link = post.link, fileLink == nil {
                 VStack(alignment: .leading, spacing: 0) {
                     if let image = link.image, !image.isEmpty {
                         AsyncImage(url: Config.authedMediaURL(image)) { img in
@@ -158,6 +186,7 @@ struct PostRow: View {
             .font(.footnote)
         }
         .padding(.vertical, 6)
+        .sheet(item: $fileToView) { ref in FileViewerSheet(fileId: ref.id, name: ref.name) }
     }
 
     private func react(_ type: String) async {

@@ -55,6 +55,18 @@ final class FilesViewModel: ObservableObject {
         stack.removeLast()
         Task { await load() }
     }
+
+    func rename(_ id: String, to name: String) async {
+        let trimmed = name.trimmingCharacters(in: .whitespaces)
+        guard !trimmed.isEmpty else { return }
+        let _: EmptyResponse? = try? await APIClient.shared.patch("/files/\(id)", body: ["name": trimmed])
+        await load()
+    }
+
+    func delete(_ id: String) async {
+        let _: EmptyResponse? = try? await APIClient.shared.delete("/files/\(id)")
+        await load()
+    }
 }
 
 struct FilesView: View {
@@ -63,6 +75,9 @@ struct FilesView: View {
     @State private var showImporter = false
     @State private var showNewFolder = false
     @State private var folderName = ""
+    @State private var fileToView: FileRef?
+    @State private var renaming: FileNode?
+    @State private var renameText = ""
 
     var body: some View {
         VStack(spacing: 0) {
@@ -95,7 +110,7 @@ struct FilesView: View {
                 List(model.items) { item in
                     Button {
                         if item.kind == "FOLDER" { model.open(item) }
-                        else { openURL(Config.fileURL(item.id)) }
+                        else { fileToView = FileRef(id: item.id, name: item.name) }
                     } label: {
                         HStack(spacing: 12) {
                             Image(systemName: icon(for: item))
@@ -109,6 +124,12 @@ struct FilesView: View {
                             }
                             Spacer()
                             if item.kind == "FOLDER" { Image(systemName: "chevron.right").font(.caption).foregroundStyle(.tertiary) }
+                        }
+                    }
+                    .swipeActions {
+                        if model.canWrite {
+                            Button(role: .destructive) { Task { await model.delete(item.id) } } label: { Label("Delete", systemImage: "trash") }
+                            Button { renaming = item; renameText = item.name } label: { Label("Rename", systemImage: "pencil") }.tint(.accentColor)
                         }
                     }
                 }
@@ -136,6 +157,14 @@ struct FilesView: View {
             TextField("Folder name", text: $folderName)
             Button("Create") { Task { await model.createFolder(folderName); folderName = "" } }
             Button("Cancel", role: .cancel) {}
+        }
+        .alert("Rename", isPresented: Binding(get: { renaming != nil }, set: { if !$0 { renaming = nil } })) {
+            TextField("New name", text: $renameText)
+            Button("Rename") { if let item = renaming { Task { await model.rename(item.id, to: renameText); renaming = nil } } }
+            Button("Cancel", role: .cancel) { renaming = nil }
+        }
+        .sheet(item: $fileToView) { ref in
+            FileViewerSheet(fileId: ref.id, name: ref.name)
         }
         .task { await model.load() }
     }
