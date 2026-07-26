@@ -15,20 +15,31 @@ final class ConversationsViewModel: ObservableObject {
         }
         isLoading = false
     }
+
+    func startDM(_ userId: String) async -> String? {
+        struct Body: Encodable { let userId: String }
+        struct Res: Decodable { let conversationId: String }
+        if let res: Res = try? await APIClient.shared.post("/conversations", body: Body(userId: userId)) {
+            return res.conversationId
+        }
+        return nil
+    }
 }
 
 struct ConversationsView: View {
     @StateObject private var model = ConversationsViewModel()
+    @State private var path = NavigationPath()
+    @State private var composing = false
 
     var body: some View {
-        NavigationStack {
+        NavigationStack(path: $path) {
             Group {
                 if model.isLoading {
                     ProgressView()
                 } else if model.conversations.isEmpty {
                     ContentUnavailableViewCompat(
                         title: "No messages yet",
-                        message: model.errorMessage ?? "Your conversations will show up here."
+                        message: model.errorMessage ?? "Tap the pencil to start a conversation."
                     )
                 } else {
                     List(model.conversations) { convo in
@@ -37,13 +48,63 @@ struct ConversationsView: View {
                         }
                     }
                     .listStyle(.plain)
-                    .navigationDestination(for: AppRoute.self) { destinationView(for: $0) }
                     .refreshable { await model.load() }
                 }
             }
+            .navigationDestination(for: AppRoute.self) { destinationView(for: $0) }
             .navigationTitle("Messages")
+            .toolbar {
+                ToolbarItem(placement: .topBarTrailing) {
+                    Button { composing = true } label: { Image(systemName: "square.and.pencil") }
+                }
+            }
+            .sheet(isPresented: $composing) {
+                NewMessageSheet { person in
+                    Task {
+                        if let id = await model.startDM(person.id) {
+                            composing = false
+                            path.append(AppRoute.conversation(id))
+                        }
+                    }
+                }
+            }
             .task { await model.load() }
         }
+    }
+}
+
+private struct NewMessageSheet: View {
+    let onPick: (PersonRef) -> Void
+    @Environment(\.dismiss) private var dismiss
+    @State private var query = ""
+    @State private var results: [PersonRef] = []
+
+    var body: some View {
+        NavigationStack {
+            List(results) { person in
+                Button { onPick(person) } label: {
+                    HStack(spacing: 10) {
+                        AvatarView(name: person.name, url: person.avatarUrl, size: 32)
+                        VStack(alignment: .leading) {
+                            Text(person.name).font(.subheadline.weight(.semibold))
+                            if let title = person.title { Text(title).font(.caption).foregroundStyle(.secondary) }
+                        }
+                    }
+                }
+            }
+            .searchable(text: $query)
+            .onChange(of: query) { q in Task { await search(q) } }
+            .navigationTitle("New message")
+            .navigationBarTitleDisplayMode(.inline)
+            .toolbar { ToolbarItem(placement: .cancellationAction) { Button("Cancel") { dismiss() } } }
+        }
+    }
+
+    private func search(_ q: String) async {
+        let query = q.trimmingCharacters(in: .whitespaces)
+        guard !query.isEmpty else { results = []; return }
+        let encoded = query.addingPercentEncoding(withAllowedCharacters: .urlQueryAllowed) ?? query
+        if let res: PeopleResponse = try? await APIClient.shared.get("/people?q=\(encoded)") { results = res.people }
     }
 }
 

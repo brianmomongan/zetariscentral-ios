@@ -105,6 +105,7 @@ struct FeedView: View {
             }
             .task { await model.load() }
         }
+        .handlesRouteLinks($path)
     }
 }
 

@@ -20,6 +20,27 @@ enum AppRoute: Hashable {
     case tag(String)           // hashtag
 }
 
+/// Intercepts the `zetariscentral://profile/…` and `…/tag/…` links that RichText
+/// emits and pushes them onto this stack's path; real links open normally.
+struct RouteLinkHandler: ViewModifier {
+    @Binding var path: NavigationPath
+    func body(content: Content) -> some View {
+        content.environment(\.openURL, OpenURLAction { url in
+            guard url.scheme == "zetariscentral" else { return .systemAction }
+            let arg = url.pathComponents.dropFirst().first
+            switch url.host {
+            case "profile": if let arg { path.append(AppRoute.profile(arg)) }; return .handled
+            case "tag": if let arg { path.append(AppRoute.tag(arg)) }; return .handled
+            default: return .systemAction
+            }
+        })
+    }
+}
+
+extension View {
+    func handlesRouteLinks(_ path: Binding<NavigationPath>) -> some View { modifier(RouteLinkHandler(path: path)) }
+}
+
 @ViewBuilder
 func destinationView(for route: AppRoute) -> some View {
     switch route {
