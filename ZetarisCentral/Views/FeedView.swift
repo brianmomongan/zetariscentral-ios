@@ -47,14 +47,6 @@ struct FeedView: View {
     var body: some View {
         NavigationStack(path: $path) {
             VStack(spacing: 0) {
-                Picker("Feed", selection: $model.filter) {
-                    Text("For you").tag("foryou")
-                    Text("Following").tag("following")
-                }
-                .pickerStyle(.segmented)
-                .padding(.horizontal).padding(.vertical, 6)
-                .onChange(of: model.filter) { _ in Task { model.posts = []; await model.load() } }
-
                 Group {
                     if model.isLoading {
                         ProgressView().frame(maxWidth: .infinity, maxHeight: .infinity)
@@ -84,7 +76,17 @@ struct FeedView: View {
             .onChange(of: router.pendingRoute) { r in if let r { path.append(r); router.pendingRoute = nil } }
             .onChange(of: router.pendingFilter) { f in if let f { model.filter = f; router.pendingFilter = nil } }
             .navigationTitle("Home")
+            .navigationBarTitleDisplayMode(.inline)
             .toolbar {
+                ToolbarItem(placement: .principal) {
+                    Picker("Feed", selection: $model.filter) {
+                        Text("For you").tag("foryou")
+                        Text("Following").tag("following")
+                    }
+                    .pickerStyle(.segmented)
+                    .frame(width: 220)
+                    .onChange(of: model.filter) { _ in Task { model.posts = []; await model.load() } }
+                }
                 ToolbarItem(placement: .topBarLeading) {
                     Menu {
                         if let id = auth.currentUser?.id {

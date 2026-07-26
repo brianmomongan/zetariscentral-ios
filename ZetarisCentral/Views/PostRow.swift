@@ -160,26 +160,27 @@ struct PostRow: View {
 
             Divider()
 
-            HStack {
+            HStack(spacing: 0) {
                 Menu {
                     ForEach(reactionTypes) { rt in
                         Button { Task { await react(rt.type) } } label: { Text("\(rt.emoji)  \(rt.label)") }
                     }
                 } label: {
                     Label { Text(reactionLabel(mine)) } icon: { Lucide("thumbs-up", size: 18) }
+                        .frame(maxWidth: .infinity)
                         .foregroundStyle(mine != nil ? Color.accentColor : Color.secondary)
                 } primaryAction: {
                     Task { await react(mine ?? "LIKE") }
                 }
                 .buttonStyle(.borderless)
 
-                Spacer()
                 Label { Text("Comment") } icon: { Lucide("message-circle", size: 18) }
+                    .frame(maxWidth: .infinity)
                     .foregroundStyle(.secondary)
-                Spacer()
 
                 Button { Task { await toggleBookmark() } } label: {
                     Label { Text(bookmarked ? "Saved" : "Save") } icon: { Lucide("bookmark", size: 18) }
+                        .frame(maxWidth: .infinity)
                         .foregroundStyle(bookmarked ? Color.accentColor : Color.secondary)
                 }
                 .buttonStyle(.borderless)

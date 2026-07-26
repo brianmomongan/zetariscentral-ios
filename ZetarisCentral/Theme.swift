@@ -27,18 +27,22 @@ enum Theme {
 }
 
 extension View {
-    /// The web/Android post card: rounded surface, hairline border, one subtle
-    /// shadow. Announcements get an amber edge.
+    /// The web post card (DESIGN.md is "flat design: no borders anywhere;
+    /// surfaces are separated by background"): a rounded surface that sits a
+    /// shade lighter than the sunken page, no border, one whisper of shadow for
+    /// lift in light mode. Only announcements get an amber edge.
     func postCard(announcement: Bool = false) -> some View {
         self
             .frame(maxWidth: .infinity, alignment: .leading)
-            .padding(14)
+            .padding(16)
             .background(Theme.surface)
-            .clipShape(RoundedRectangle(cornerRadius: 12, style: .continuous))
-            .overlay(
-                RoundedRectangle(cornerRadius: 12, style: .continuous)
-                    .strokeBorder(announcement ? Theme.announce.opacity(0.45) : Theme.cardBorder, lineWidth: 1)
-            )
-            .shadow(color: .black.opacity(0.05), radius: 3, y: 1)
+            .clipShape(RoundedRectangle(cornerRadius: 14, style: .continuous))
+            .overlay {
+                if announcement {
+                    RoundedRectangle(cornerRadius: 14, style: .continuous)
+                        .strokeBorder(Theme.announce.opacity(0.4), lineWidth: 1)
+                }
+            }
+            .shadow(color: .black.opacity(0.04), radius: 2, y: 1)
     }
 }
