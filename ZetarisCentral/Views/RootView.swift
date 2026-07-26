@@ -11,6 +11,8 @@ final class TabRouter: ObservableObject {
     @Published var pendingRoute: AppRoute? = nil
     @Published var pendingFilter: String? = nil
     @Published var seedQuery = ""
+    /// `zetariscentral://conversation/<id>` opens a thread on the Messages tab.
+    @Published var pendingConversation: String? = nil
 }
 
 struct RootView: View {

@@ -38,6 +38,11 @@ struct ZetarisCentralApp: App {
                         TabRouter.shared.pendingFilter = url.lastPathComponent
                         return
                     }
+                    if url.host == "conversation" {
+                        TabRouter.shared.selection = 4
+                        TabRouter.shared.pendingConversation = url.lastPathComponent
+                        return
+                    }
                     guard url.host == "auth" else { return }
                     let items = URLComponents(url: url, resolvingAgainstBaseURL: false)?.queryItems
                     if let token = items?.first(where: { $0.name == "token" })?.value {

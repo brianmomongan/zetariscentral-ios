@@ -28,6 +28,7 @@ final class ConversationsViewModel: ObservableObject {
 
 struct ConversationsView: View {
     @StateObject private var model = ConversationsViewModel()
+    @ObservedObject private var router = TabRouter.shared
     @State private var path = NavigationPath()
     @State private var composing = false
 
@@ -52,6 +53,12 @@ struct ConversationsView: View {
                 }
             }
             .navigationDestination(for: AppRoute.self) { destinationView(for: $0) }
+            .onChange(of: router.pendingConversation) { id in
+                if let id { path.append(AppRoute.conversation(id)); router.pendingConversation = nil }
+            }
+            .onAppear {
+                if let id = router.pendingConversation { path.append(AppRoute.conversation(id)); router.pendingConversation = nil }
+            }
             .navigationTitle("Messages")
             .toolbar {
                 ToolbarItem(placement: .topBarTrailing) {
