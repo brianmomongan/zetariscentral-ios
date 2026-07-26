@@ -132,6 +132,7 @@ private struct SpaceHeader: View {
     let space: SpaceDetail
     let members: [SpaceMemberView]
     @ObservedObject var model: SpaceDetailViewModel
+    @State private var confirmLeave = false
 
     var body: some View {
         VStack(alignment: .leading, spacing: 10) {
@@ -167,9 +168,13 @@ private struct SpaceHeader: View {
         if space.isOwner {
             Text("Owner").font(.caption.weight(.semibold)).foregroundStyle(.secondary)
         } else if space.isMember {
-            Button("Leave") { Task { await model.leave() } }
+            Button("Leave") { confirmLeave = true }
                 .buttonStyle(.bordered)
                 .disabled(model.working)
+                .alert("Leave \(space.name)?", isPresented: $confirmLeave) {
+                    Button("Leave", role: .destructive) { Task { await model.leave() } }
+                    Button("Cancel", role: .cancel) {}
+                }
         } else if space.visibility == "PUBLIC" {
             Button("Join") { Task { await model.join() } }
                 .buttonStyle(.borderedProminent)

@@ -91,6 +91,7 @@ private struct ProfileHeader: View {
     let profile: Profile
     @ObservedObject var model: ProfileViewModel
     let onMessage: () -> Void
+    @State private var confirmUnfollow = false
 
     var body: some View {
         VStack(alignment: .leading, spacing: 12) {
@@ -122,7 +123,7 @@ private struct ProfileHeader: View {
             if !profile.isMe {
                 HStack(spacing: 10) {
                     if profile.isFollowing {
-                        Button { Task { await model.toggleFollow() } } label: { Text("Following").frame(maxWidth: .infinity) }
+                        Button { confirmUnfollow = true } label: { Text("Following").frame(maxWidth: .infinity) }
                             .buttonStyle(.bordered).disabled(model.working)
                     } else {
                         Button { Task { await model.toggleFollow() } } label: { Text("Follow").frame(maxWidth: .infinity) }
@@ -130,6 +131,10 @@ private struct ProfileHeader: View {
                     }
                     Button { onMessage() } label: { Text("Message").frame(maxWidth: .infinity) }
                         .buttonStyle(.bordered)
+                }
+                .alert("Unfollow \(profile.name)?", isPresented: $confirmUnfollow) {
+                    Button("Unfollow", role: .destructive) { Task { await model.toggleFollow() } }
+                    Button("Cancel", role: .cancel) {}
                 }
             }
         }
