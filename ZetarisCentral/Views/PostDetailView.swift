@@ -78,6 +78,14 @@ struct PostDetailView: View {
                         if !post.content.isEmpty {
                             Text(post.content).font(.body)
                         }
+                        ForEach(post.images, id: \.self) { img in
+                            AsyncImage(url: Config.mediaURL(img)) { image in
+                                image.resizable().scaledToFit()
+                            } placeholder: {
+                                Color.gray.opacity(0.1).frame(height: 200)
+                            }
+                            .clipShape(RoundedRectangle(cornerRadius: 12))
+                        }
                         if let link = post.link { LinkCardView(link: link) }
                         ActionBar(post: post, model: model)
                         Divider()

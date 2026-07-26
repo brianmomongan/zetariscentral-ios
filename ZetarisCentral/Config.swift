@@ -11,6 +11,15 @@ enum Config {
     /// Origin (no path) for building non-v1 URLs like file downloads.
     static let apiOrigin = URL(string: "http://localhost:3030")!
 
+    /// Resolve a possibly-relative media path (e.g. "/uploads/x.png") to an
+    /// absolute URL the image loader can fetch.
+    static func mediaURL(_ path: String) -> URL? {
+        if path.hasPrefix("http") { return URL(string: path) }
+        var url = apiOrigin
+        url.append(path: path)
+        return url
+    }
+
     /// A tokenized URL for opening/previewing a file's bytes in the browser.
     static func fileURL(_ id: String) -> URL {
         var url = apiOrigin

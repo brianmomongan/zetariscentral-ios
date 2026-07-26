@@ -32,6 +32,27 @@ struct PostRow: View {
                 Text(post.content).font(.body)
             }
 
+            if !post.images.isEmpty {
+                ScrollView(.horizontal, showsIndicators: false) {
+                    HStack(spacing: 6) {
+                        ForEach(post.images, id: \.self) { img in
+                            AsyncImage(url: Config.mediaURL(img)) { image in
+                                image.resizable().scaledToFill()
+                            } placeholder: {
+                                Color.gray.opacity(0.1)
+                            }
+                            .frame(width: 220, height: 160)
+                            .clipShape(RoundedRectangle(cornerRadius: 10))
+                        }
+                    }
+                }
+            }
+
+            if !post.videos.isEmpty {
+                Label("\(post.videos.count) video\(post.videos.count == 1 ? "" : "s")", systemImage: "play.rectangle.fill")
+                    .font(.caption).foregroundStyle(.secondary)
+            }
+
             if let link = post.link {
                 VStack(alignment: .leading, spacing: 2) {
                     if let domain = link.domain {

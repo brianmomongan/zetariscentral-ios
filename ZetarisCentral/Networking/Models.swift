@@ -397,6 +397,13 @@ struct FilesResponse: Codable {
     let items: [FileNode]
 }
 
+// MARK: - Media
+
+struct MediaRef: Codable, Hashable {
+    let url: String
+    let type: String   // IMAGE | VIDEO
+}
+
 struct CreatedPost: Codable {
     let id: String
     let content: String

@@ -1,4 +1,6 @@
 import SwiftUI
+import PhotosUI
+import UIKit
 
 @MainActor
 final class FeedViewModel: ObservableObject {
@@ -20,10 +22,10 @@ final class FeedViewModel: ObservableObject {
         if let res: GroupsResponse = try? await APIClient.shared.get("/groups") { groups = res.groups }
     }
 
-    func createPost(_ content: String, visibility: String, groupId: String?) async -> Bool {
-        struct Body: Codable { let content: String; let visibility: String; let groupId: String? }
+    func createPost(_ content: String, visibility: String, groupId: String?, media: [MediaRef]) async -> Bool {
+        struct Body: Codable { let content: String; let visibility: String; let groupId: String?; let media: [MediaRef] }
         do {
-            let _: CreatePostResponse = try await APIClient.shared.post("/posts", body: Body(content: content, visibility: visibility, groupId: groupId))
+            let _: CreatePostResponse = try await APIClient.shared.post("/posts", body: Body(content: content, visibility: visibility, groupId: groupId, media: media))
             await load()
             return true
         } catch {
@@ -79,8 +81,8 @@ struct FeedView: View {
                 }
             }
             .sheet(isPresented: $showComposer) {
-                ComposerView(groups: model.groups) { content, visibility, groupId in
-                    let ok = await model.createPost(content, visibility: visibility, groupId: groupId)
+                ComposerView(groups: model.groups) { content, visibility, groupId, media in
+                    let ok = await model.createPost(content, visibility: visibility, groupId: groupId, media: media)
                     if ok { showComposer = false }
                 }
             }
@@ -91,11 +93,14 @@ struct FeedView: View {
 
 private struct ComposerView: View {
     let groups: [GroupSummary]
-    let onPost: (_ content: String, _ visibility: String, _ groupId: String?) async -> Void
+    let onPost: (_ content: String, _ visibility: String, _ groupId: String?, _ media: [MediaRef]) async -> Void
     @Environment(\.dismiss) private var dismiss
     @State private var text = ""
     @State private var audience = "COMPANY" // COMPANY | PRIVATE | group:<id>
     @State private var posting = false
+    @State private var pickerItems: [PhotosPickerItem] = []
+    @State private var uploaded: [MediaRef] = []
+    @State private var uploading = false
 
     var body: some View {
         NavigationStack {
@@ -114,12 +119,28 @@ private struct ComposerView: View {
                         Label(audienceLabel, systemImage: audienceIcon).font(.subheadline)
                     }
                     Spacer()
+                    PhotosPicker(selection: $pickerItems, maxSelectionCount: 4, matching: .images) {
+                        Image(systemName: "photo.on.rectangle")
+                    }
                 }
                 .padding(.horizontal).padding(.top, 8)
+
+                if uploading || !uploaded.isEmpty {
+                    HStack {
+                        if uploading { ProgressView() }
+                        if !uploaded.isEmpty { Text("\(uploaded.count) photo\(uploaded.count == 1 ? "" : "s") attached").font(.caption).foregroundStyle(.secondary) }
+                        Spacer()
+                    }
+                    .padding(.horizontal).padding(.top, 4)
+                }
+
                 TextEditor(text: $text).padding(8)
             }
             .navigationTitle("New post")
             .navigationBarTitleDisplayMode(.inline)
+            .onChange(of: pickerItems) { items in
+                Task { await upload(items) }
+            }
             .toolbar {
                 ToolbarItem(placement: .cancellationAction) { Button("Cancel") { dismiss() } }
                 ToolbarItem(placement: .confirmationAction) {
@@ -127,12 +148,29 @@ private struct ComposerView: View {
                         posting = true
                         let visibility = audience == "PRIVATE" ? "PRIVATE" : audience.hasPrefix("group:") ? "GROUP" : "COMPANY"
                         let groupId = audience.hasPrefix("group:") ? String(audience.dropFirst(6)) : nil
-                        Task { await onPost(text, visibility, groupId); posting = false }
+                        Task { await onPost(text, visibility, groupId, uploaded); posting = false }
                     }
-                    .disabled(text.trimmingCharacters(in: .whitespacesAndNewlines).isEmpty || posting)
+                    .disabled((text.trimmingCharacters(in: .whitespacesAndNewlines).isEmpty && uploaded.isEmpty) || posting || uploading)
                 }
             }
         }
+    }
+
+    private func upload(_ items: [PhotosPickerItem]) async {
+        guard !items.isEmpty else { return }
+        uploading = true
+        uploaded = []
+        for item in items {
+            // Re-encode to JPEG so HEIC photos display everywhere.
+            if let data = try? await item.loadTransferable(type: Data.self),
+               let image = UIImage(data: data),
+               let jpeg = image.jpegData(compressionQuality: 0.85) {
+                if let ref = try? await APIClient.shared.uploadMedia(jpeg, filename: "photo.jpg", mimeType: "image/jpeg") {
+                    uploaded.append(ref)
+                }
+            }
+        }
+        uploading = false
     }
 
     private var audienceLabel: String {
