@@ -182,6 +182,10 @@ struct MessagesResponse: Codable {
     let messages: [ChatMessage]
 }
 
+struct TypingResponse: Codable {
+    let typing: [String]
+}
+
 // MARK: - Notifications
 
 struct NotificationEvent: Codable {
