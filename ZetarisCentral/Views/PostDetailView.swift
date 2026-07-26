@@ -17,6 +17,9 @@ final class PostDetailViewModel: ObservableObject {
     @Published var errorMessage: String?
     @Published var commentText = ""
     @Published var sending = false
+    @Published var replyingTo: Comment?
+    @Published var editing = false
+    @Published var editText = ""
 
     init(postId: String) { self.postId = postId }
 
@@ -45,23 +48,43 @@ final class PostDetailViewModel: ObservableObject {
         await load()
     }
 
+    func setReply(_ c: Comment?) { replyingTo = c }
+
     func addComment() async {
         let text = commentText.trimmingCharacters(in: .whitespacesAndNewlines)
         guard !text.isEmpty else { return }
         sending = true
+        struct Body: Encodable { let content: String; let parentId: String? }
         do {
-            let _: CommentResponse = try await APIClient.shared.post("/posts/\(postId)/comments", body: ["content": text])
+            let _: CommentResponse = try await APIClient.shared.post("/posts/\(postId)/comments", body: Body(content: text, parentId: replyingTo?.id))
             commentText = ""
+            replyingTo = nil
             await load()
         } catch {
             errorMessage = (error as? LocalizedError)?.errorDescription ?? "Couldn't post comment."
         }
         sending = false
     }
+
+    func saveEdit() async {
+        struct Body: Encodable { let content: String }
+        if let res: PostDetailResponse = try? await APIClient.shared.patch("/posts/\(postId)", body: Body(content: editText)) {
+            post = res.post
+        }
+        editing = false
+    }
+
+    func deletePost() async -> Bool {
+        do { let _: EmptyResponse = try await APIClient.shared.delete("/posts/\(postId)"); return true }
+        catch { return false }
+    }
 }
 
 struct PostDetailView: View {
+    @EnvironmentObject private var auth: AuthViewModel
+    @Environment(\.dismiss) private var dismiss
     @StateObject private var model: PostDetailViewModel
+    @State private var showDelete = false
 
     init(postId: String) {
         _model = StateObject(wrappedValue: PostDetailViewModel(postId: postId))
@@ -75,8 +98,19 @@ struct PostDetailView: View {
                 ScrollView {
                     VStack(alignment: .leading, spacing: 14) {
                         PostHeader(post: post)
-                        if !post.content.isEmpty {
-                            Text(post.content).font(.body)
+                        if model.editing {
+                            VStack(spacing: 8) {
+                                TextEditor(text: $model.editText)
+                                    .frame(minHeight: 100)
+                                    .overlay(RoundedRectangle(cornerRadius: 8).stroke(.quaternary))
+                                HStack {
+                                    Button("Cancel") { model.editing = false }
+                                    Spacer()
+                                    Button("Save") { Task { await model.saveEdit() } }.buttonStyle(.borderedProminent)
+                                }
+                            }
+                        } else if !post.content.isEmpty {
+                            RichText(post.content)
                         }
                         ForEach(post.images, id: \.self) { img in
                             AsyncImage(url: Config.mediaURL(img)) { image in
@@ -85,6 +119,11 @@ struct PostDetailView: View {
                                 Color.gray.opacity(0.1).frame(height: 200)
                             }
                             .clipShape(RoundedRectangle(cornerRadius: 12))
+                        }
+                        ForEach(post.videos, id: \.self) { video in
+                            if let url = Config.mediaURL(video) {
+                                VideoPlayerView(url: url).frame(height: 220).clipShape(RoundedRectangle(cornerRadius: 12))
+                            }
                         }
                         if let link = post.link { LinkCardView(link: link) }
                         ActionBar(post: post, model: model)
@@ -101,6 +140,20 @@ struct PostDetailView: View {
         }
         .navigationTitle("Post")
         .navigationBarTitleDisplayMode(.inline)
+        .toolbar {
+            if let post = model.post, post.author.id == auth.currentUser?.id {
+                ToolbarItem(placement: .topBarTrailing) {
+                    Menu {
+                        Button { model.editText = post.content; model.editing = true } label: { Label("Edit", systemImage: "pencil") }
+                        Button(role: .destructive) { showDelete = true } label: { Label("Delete", systemImage: "trash") }
+                    } label: { Image(systemName: "ellipsis") }
+                }
+            }
+        }
+        .alert("Delete post?", isPresented: $showDelete) {
+            Button("Delete", role: .destructive) { Task { if await model.deletePost() { dismiss() } } }
+            Button("Cancel", role: .cancel) {}
+        } message: { Text("This can't be undone.") }
         .task { await model.load() }
     }
 }
@@ -114,7 +167,10 @@ private struct PostHeader: View {
                     AvatarView(name: post.author.name, url: post.author.avatarUrl)
                     VStack(alignment: .leading, spacing: 1) {
                         Text(post.author.name).font(.subheadline.weight(.semibold))
-                        Text(post.createdAt, style: .relative).font(.caption).foregroundStyle(.secondary)
+                        HStack(spacing: 4) {
+                            Text(post.createdAt, style: .relative).font(.caption).foregroundStyle(.secondary)
+                            if post.editedAt != nil { Text("· edited").font(.caption).foregroundStyle(.secondary) }
+                        }
                     }
                 }
             }
@@ -127,14 +183,22 @@ private struct PostHeader: View {
 private struct LinkCardView: View {
     let link: LinkCard
     var body: some View {
-        VStack(alignment: .leading, spacing: 2) {
-            if let domain = link.domain {
-                Text(domain.uppercased()).font(.caption2.weight(.semibold)).foregroundStyle(.secondary)
+        VStack(alignment: .leading, spacing: 0) {
+            if let image = link.image, !image.isEmpty {
+                AsyncImage(url: Config.authedMediaURL(image)) { img in
+                    img.resizable().scaledToFill()
+                } placeholder: { Color.gray.opacity(0.1) }
+                .frame(maxWidth: .infinity).frame(height: 160).clipped()
             }
-            Text(link.title ?? link.url).font(.subheadline.weight(.semibold)).lineLimit(2)
+            VStack(alignment: .leading, spacing: 2) {
+                if let domain = link.domain {
+                    Text(domain.uppercased()).font(.caption2.weight(.semibold)).foregroundStyle(.secondary)
+                }
+                Text(link.title ?? link.url).font(.subheadline.weight(.semibold)).lineLimit(2)
+                if let desc = link.description { Text(desc).font(.caption).foregroundStyle(.secondary).lineLimit(2) }
+            }
+            .padding(10).frame(maxWidth: .infinity, alignment: .leading)
         }
-        .padding(10)
-        .frame(maxWidth: .infinity, alignment: .leading)
         .background(.quaternary, in: RoundedRectangle(cornerRadius: 10))
     }
 }
@@ -146,24 +210,17 @@ private struct ActionBar: View {
         HStack(spacing: 18) {
             Menu {
                 ForEach(reactionOptions, id: \.type) { option in
-                    Button {
-                        Task { await model.react(option.type) }
-                    } label: {
-                        Text("\(option.emoji)  \(option.label)")
-                    }
+                    Button { Task { await model.react(option.type) } } label: { Text("\(option.emoji)  \(option.label)") }
                 }
             } label: {
-                Label(
-                    "\(post.reactions.total)",
-                    systemImage: post.reactions.mine != nil ? "hand.thumbsup.fill" : "hand.thumbsup"
-                )
+                Label("\(post.reactions.total)", systemImage: post.reactions.mine != nil ? "hand.thumbsup.fill" : "hand.thumbsup")
+                    .foregroundStyle(post.reactions.mine != nil ? Color.accentColor : Color.secondary)
             }
             Label("\(post.commentCount)", systemImage: "bubble.left")
             Spacer()
-            Button {
-                Task { await model.toggleBookmark() }
-            } label: {
+            Button { Task { await model.toggleBookmark() } } label: {
                 Image(systemName: post.bookmarkedByMe ? "bookmark.fill" : "bookmark")
+                    .foregroundStyle(post.bookmarkedByMe ? Color.accentColor : Color.secondary)
             }
         }
         .font(.subheadline)
@@ -183,8 +240,7 @@ private struct CommentsSection: View {
                 ForEach(comments) { comment in
                     CommentRow(comment: comment, model: model)
                     ForEach(comment.replies ?? []) { reply in
-                        CommentRow(comment: reply, model: model)
-                            .padding(.leading, 28)
+                        CommentRow(comment: reply, model: model).padding(.leading, 28)
                     }
                 }
             }
@@ -204,23 +260,37 @@ private struct CommentRow: View {
             VStack(alignment: .leading, spacing: 3) {
                 VStack(alignment: .leading, spacing: 2) {
                     Text(comment.author.name).font(.subheadline.weight(.semibold))
-                    Text(comment.content).font(.subheadline)
+                    if !comment.content.isEmpty { RichText(comment.content).font(.subheadline) }
                 }
                 .padding(10)
                 .frame(maxWidth: .infinity, alignment: .leading)
                 .background(.quaternary, in: RoundedRectangle(cornerRadius: 12))
 
-                Button {
-                    Task { await model.toggleCommentLike(comment.id) }
-                } label: {
-                    HStack(spacing: 4) {
-                        Image(systemName: comment.likedByMe ? "heart.fill" : "heart")
-                        if comment.likeCount > 0 { Text("\(comment.likeCount)") }
+                if !comment.images.isEmpty {
+                    ScrollView(.horizontal, showsIndicators: false) {
+                        HStack(spacing: 6) {
+                            ForEach(comment.images, id: \.self) { img in
+                                AsyncImage(url: Config.mediaURL(img)) { image in image.resizable().scaledToFill() } placeholder: { Color.gray.opacity(0.1) }
+                                    .frame(width: 120, height: 120).clipShape(RoundedRectangle(cornerRadius: 8))
+                            }
+                        }
                     }
-                    .font(.caption)
-                    .foregroundStyle(comment.likedByMe ? .red : .secondary)
                 }
-                .buttonStyle(.plain)
+
+                HStack(spacing: 14) {
+                    Button {
+                        Task { await model.toggleCommentLike(comment.id) }
+                    } label: {
+                        HStack(spacing: 4) {
+                            Image(systemName: comment.likedByMe ? "heart.fill" : "heart")
+                            if comment.likeCount > 0 { Text("\(comment.likeCount)") }
+                        }
+                        .font(.caption)
+                        .foregroundStyle(comment.likedByMe ? .red : .secondary)
+                    }
+                    .buttonStyle(.plain)
+                    Button("Reply") { model.setReply(comment) }.font(.caption).buttonStyle(.plain).foregroundStyle(.secondary)
+                }
                 .padding(.leading, 4)
             }
         }
@@ -231,6 +301,14 @@ private struct CommentComposer: View {
     @ObservedObject var model: PostDetailViewModel
     var body: some View {
         Divider()
+        if let target = model.replyingTo {
+            HStack {
+                Text("Replying to \(target.author.name)").font(.caption).foregroundStyle(.secondary)
+                Spacer()
+                Button("Cancel") { model.setReply(nil) }.font(.caption)
+            }
+            .padding(.horizontal).padding(.top, 6)
+        }
         HStack(spacing: 10) {
             TextField("Add a comment…", text: $model.commentText, axis: .vertical)
                 .textFieldStyle(.roundedBorder)
