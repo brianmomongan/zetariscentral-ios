@@ -89,10 +89,23 @@ final class GroupDetailViewModel: ObservableObject {
         let _: EmptyResponse? = try? await APIClient.shared.delete("/groups/\(groupId)/members?userId=\(userId)")
         await load()
     }
+
+    func leave() async -> Bool {
+        do { let _: EmptyResponse = try await APIClient.shared.post("/groups/\(groupId)/leave"); return true }
+        catch { return false }
+    }
+
+    func deleteGroup() async -> Bool {
+        do { let _: EmptyResponse = try await APIClient.shared.delete("/groups/\(groupId)"); return true }
+        catch { return false }
+    }
 }
 
 struct GroupDetailView: View {
     @StateObject private var model: GroupDetailViewModel
+    @Environment(\.dismiss) private var dismiss
+    @State private var showLeave = false
+    @State private var showDelete = false
 
     init(groupId: String) {
         _model = StateObject(wrappedValue: GroupDetailViewModel(groupId: groupId))
@@ -128,6 +141,18 @@ struct GroupDetailView: View {
                                     }
                                 }
                             }
+                            .swipeActions {
+                                if group.isOwner && !member.isOwner {
+                                    Button(role: .destructive) { Task { await model.remove(member.id) } } label: { Label("Remove", systemImage: "minus.circle") }
+                                }
+                            }
+                        }
+                    }
+                    Section {
+                        if group.isOwner {
+                            Button("Delete group", role: .destructive) { showDelete = true }
+                        } else {
+                            Button("Leave group", role: .destructive) { showLeave = true }
                         }
                     }
                 }
@@ -137,6 +162,14 @@ struct GroupDetailView: View {
         }
         .navigationTitle(model.group?.name ?? "Group")
         .navigationBarTitleDisplayMode(.inline)
+        .alert("Leave group?", isPresented: $showLeave) {
+            Button("Leave", role: .destructive) { Task { if await model.leave() { dismiss() } } }
+            Button("Cancel", role: .cancel) {}
+        }
+        .alert("Delete group?", isPresented: $showDelete) {
+            Button("Delete", role: .destructive) { Task { if await model.deleteGroup() { dismiss() } } }
+            Button("Cancel", role: .cancel) {}
+        } message: { Text("This can't be undone.") }
         .task { await model.load() }
     }
 }

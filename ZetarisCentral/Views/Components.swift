@@ -55,6 +55,9 @@ struct VideoPlayerView: View {
     }
 }
 
+/// Identifiable String wrapper for `.sheet(item:)`.
+struct IdentifiedString: Identifiable { let value: String; var id: String { value } }
+
 /// Centered empty-state placeholder (title + optional hint).
 struct EmptyStateView: View {
     let title: String

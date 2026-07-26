@@ -18,6 +18,8 @@ enum AppRoute: Hashable {
     case saved                 // bookmarked posts
     case directory             // people directory
     case tag(String)           // hashtag
+    case followers(String)     // user id
+    case following(String)     // user id
 }
 
 /// Intercepts the `zetariscentral://profile/…` and `…/tag/…` links that RichText
@@ -58,5 +60,7 @@ func destinationView(for route: AppRoute) -> some View {
     case .saved: SavedView()
     case .directory: DirectoryView()
     case .tag(let tag): TagView(tag: tag)
+    case .followers(let id): PeopleListView(userId: id, mode: "followers")
+    case .following(let id): PeopleListView(userId: id, mode: "following")
     }
 }

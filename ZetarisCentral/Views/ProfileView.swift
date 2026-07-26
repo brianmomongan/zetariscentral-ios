@@ -28,10 +28,20 @@ final class ProfileViewModel: ObservableObject {
         await load()
         working = false
     }
+
+    func startDM() async -> String? {
+        struct Body: Encodable { let userId: String }
+        struct Res: Decodable { let conversationId: String }
+        if let res: Res = try? await APIClient.shared.post("/conversations", body: Body(userId: userId)) {
+            return res.conversationId
+        }
+        return nil
+    }
 }
 
 struct ProfileView: View {
     @StateObject private var model: ProfileViewModel
+    @State private var openConvo: IdentifiedString?
 
     init(userId: String) {
         _model = StateObject(wrappedValue: ProfileViewModel(userId: userId))
@@ -44,7 +54,9 @@ struct ProfileView: View {
             } else if let profile = model.profile {
                 List {
                     Section {
-                        ProfileHeader(profile: profile, model: model)
+                        ProfileHeader(profile: profile, model: model, onMessage: {
+                            Task { if let id = await model.startDM() { openConvo = IdentifiedString(value: id) } }
+                        })
                             .listRowInsets(EdgeInsets(top: 16, leading: 16, bottom: 12, trailing: 16))
                     }
                     Section("Posts") {
@@ -68,6 +80,9 @@ struct ProfileView: View {
         }
         .navigationTitle(model.profile?.name ?? "Profile")
         .navigationBarTitleDisplayMode(.inline)
+        .sheet(item: $openConvo) { convo in
+            NavigationStack { ConversationView(conversationId: convo.value) }
+        }
         .task { await model.load() }
     }
 }
@@ -75,6 +90,7 @@ struct ProfileView: View {
 private struct ProfileHeader: View {
     let profile: Profile
     @ObservedObject var model: ProfileViewModel
+    let onMessage: () -> Void
 
     var body: some View {
         VStack(alignment: .leading, spacing: 12) {
@@ -99,23 +115,21 @@ private struct ProfileHeader: View {
 
             HStack(spacing: 18) {
                 stat(profile.postCount, "Posts")
-                stat(profile.followerCount, "Followers")
-                stat(profile.followingCount, "Following")
+                NavigationLink(value: AppRoute.followers(profile.id)) { stat(profile.followerCount, "Followers") }.buttonStyle(.plain)
+                NavigationLink(value: AppRoute.following(profile.id)) { stat(profile.followingCount, "Following") }.buttonStyle(.plain)
             }
 
             if !profile.isMe {
-                if profile.isFollowing {
-                    Button { Task { await model.toggleFollow() } } label: {
-                        Text("Following").frame(maxWidth: .infinity)
+                HStack(spacing: 10) {
+                    if profile.isFollowing {
+                        Button { Task { await model.toggleFollow() } } label: { Text("Following").frame(maxWidth: .infinity) }
+                            .buttonStyle(.bordered).disabled(model.working)
+                    } else {
+                        Button { Task { await model.toggleFollow() } } label: { Text("Follow").frame(maxWidth: .infinity) }
+                            .buttonStyle(.borderedProminent).disabled(model.working)
                     }
-                    .buttonStyle(.bordered)
-                    .disabled(model.working)
-                } else {
-                    Button { Task { await model.toggleFollow() } } label: {
-                        Text("Follow").frame(maxWidth: .infinity)
-                    }
-                    .buttonStyle(.borderedProminent)
-                    .disabled(model.working)
+                    Button { onMessage() } label: { Text("Message").frame(maxWidth: .infinity) }
+                        .buttonStyle(.bordered)
                 }
             }
         }
