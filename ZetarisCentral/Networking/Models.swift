@@ -16,6 +16,10 @@ struct LoginResponse: Codable {
     let user: SessionUser
 }
 
+struct AuthConfig: Codable {
+    let microsoft: Bool
+}
+
 struct Author: Codable {
     let id: String
     let name: String

@@ -23,6 +23,11 @@ targets:
       path: ZetarisCentral/Info.plist
       properties:
         CFBundleDisplayName: Zetaris Central
+        # Custom scheme for the Microsoft SSO OAuth redirect back into the app.
+        CFBundleURLTypes:
+          - CFBundleURLName: com.zetaris.central.auth
+            CFBundleURLSchemes:
+              - zetariscentral
         UILaunchScreen: {}
         UIApplicationSceneManifest:
           UIApplicationSupportsMultipleScenes: false

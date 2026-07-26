@@ -32,6 +32,49 @@ final class AuthViewModel: ObservableObject {
         }
     }
 
+    func register(name: String, email: String, password: String, title: String) async {
+        isLoading = true
+        errorMessage = nil
+        defer { isLoading = false }
+        struct Body: Encodable { let name: String; let email: String; let password: String; let title: String? }
+        do {
+            let trimmedTitle = title.trimmingCharacters(in: .whitespacesAndNewlines)
+            let res: LoginResponse = try await APIClient.shared.post(
+                "/auth/register",
+                body: Body(
+                    name: name.trimmingCharacters(in: .whitespacesAndNewlines),
+                    email: email.trimmingCharacters(in: .whitespacesAndNewlines),
+                    password: password,
+                    title: trimmedTitle.isEmpty ? nil : trimmedTitle
+                ),
+                auth: false
+            )
+            TokenStore.shared.save(res.token)
+            currentUser = res.user
+            isAuthenticated = true
+        } catch {
+            errorMessage = (error as? LocalizedError)?.errorDescription ?? "Sign up failed."
+        }
+    }
+
+    /// Called when an OAuth (SSO) redirect delivers a session token to the app.
+    func onExternalToken(_ token: String) {
+        TokenStore.shared.save(token)
+        isAuthenticated = true
+        errorMessage = nil
+        Task { await refreshMe() }
+    }
+
+    func onExternalError(_ code: String) {
+        switch code {
+        case "domain": errorMessage = "That email domain isn't allowed."
+        case "sso_unconfigured": errorMessage = "Microsoft sign-in isn't set up on the server."
+        default: errorMessage = "Microsoft sign-in failed."
+        }
+    }
+
+    func clearError() { errorMessage = nil }
+
     func logout() {
         TokenStore.shared.clear()
         currentUser = nil
