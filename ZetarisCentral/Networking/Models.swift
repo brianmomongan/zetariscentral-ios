@@ -191,6 +191,64 @@ struct NotificationsResponse: Codable {
     let unread: Int
 }
 
+// MARK: - Spaces & events
+
+struct SpaceSummary: Codable, Identifiable {
+    let id: String
+    let slug: String
+    let name: String
+    let description: String?
+    let visibility: String
+    let memberCount: Int
+    let isMember: Bool
+}
+
+struct SpacesResponse: Codable {
+    let spaces: [SpaceSummary]
+}
+
+struct SpaceDetail: Codable {
+    let id: String
+    let slug: String
+    let name: String
+    let description: String?
+    let visibility: String
+    let ownerId: String
+    let memberCount: Int
+    let isMember: Bool
+    let isOwner: Bool
+    let canPost: Bool
+}
+
+struct SpaceMemberView: Codable, Identifiable {
+    let id: String
+    let name: String
+    let username: String?
+    let avatarUrl: String?
+    let isOwner: Bool
+}
+
+struct RsvpCounts: Codable {
+    let GOING: Int
+    let MAYBE: Int
+    let NO: Int
+}
+
+struct EventSummary: Codable, Identifiable {
+    let id: String
+    let title: String
+    let startAt: Date
+    let location: String?
+    let counts: RsvpCounts
+}
+
+struct SpaceDetailResponse: Codable {
+    let space: SpaceDetail
+    let posts: [Post]
+    let members: [SpaceMemberView]
+    let events: [EventSummary]
+}
+
 struct CreatedPost: Codable {
     let id: String
     let content: String

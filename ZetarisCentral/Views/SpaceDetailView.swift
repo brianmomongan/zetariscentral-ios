@@ -1,0 +1,151 @@
+import SwiftUI
+
+@MainActor
+final class SpaceDetailViewModel: ObservableObject {
+    let slug: String
+    @Published var data: SpaceDetailResponse?
+    @Published var isLoading = true
+    @Published var working = false
+    @Published var errorMessage: String?
+
+    init(slug: String) { self.slug = slug }
+
+    func load() async {
+        do {
+            data = try await APIClient.shared.get("/spaces/\(slug)")
+        } catch {
+            errorMessage = (error as? LocalizedError)?.errorDescription ?? "Couldn't load this space."
+        }
+        isLoading = false
+    }
+
+    func join() async {
+        working = true
+        let _: EmptyResponse? = try? await APIClient.shared.post("/spaces/\(slug)/join")
+        await load()
+        working = false
+    }
+
+    func leave() async {
+        working = true
+        let _: EmptyResponse? = try? await APIClient.shared.post("/spaces/\(slug)/leave")
+        await load()
+        working = false
+    }
+}
+
+struct SpaceDetailView: View {
+    @StateObject private var model: SpaceDetailViewModel
+
+    init(slug: String) {
+        _model = StateObject(wrappedValue: SpaceDetailViewModel(slug: slug))
+    }
+
+    var body: some View {
+        Group {
+            if model.isLoading {
+                ProgressView().frame(maxHeight: .infinity)
+            } else if let data = model.data {
+                List {
+                    Section {
+                        SpaceHeader(space: data.space, members: data.members, model: model)
+                            .listRowInsets(EdgeInsets(top: 12, leading: 16, bottom: 12, trailing: 16))
+                    }
+                    if !data.events.isEmpty {
+                        Section("Upcoming events") {
+                            ForEach(data.events) { event in EventRow(event: event) }
+                        }
+                    }
+                    Section("Posts") {
+                        if data.posts.isEmpty {
+                            Text("No posts in this space yet.").font(.subheadline).foregroundStyle(.secondary)
+                        } else {
+                            ForEach(data.posts) { post in
+                                NavigationLink(value: SpaceRoute.post(post.id)) {
+                                    PostRow(post: post)
+                                }
+                            }
+                        }
+                    }
+                }
+                .listStyle(.plain)
+                .refreshable { await model.load() }
+            } else {
+                ContentUnavailableViewCompat(title: "Unavailable", message: model.errorMessage ?? "This space can't be shown.")
+                    .frame(maxHeight: .infinity)
+            }
+        }
+        .navigationTitle(model.data?.space.name ?? "Space")
+        .navigationBarTitleDisplayMode(.inline)
+        .task { await model.load() }
+    }
+}
+
+private struct SpaceHeader: View {
+    let space: SpaceDetail
+    let members: [SpaceMemberView]
+    @ObservedObject var model: SpaceDetailViewModel
+
+    var body: some View {
+        VStack(alignment: .leading, spacing: 10) {
+            HStack {
+                VStack(alignment: .leading, spacing: 4) {
+                    Label(space.visibility == "PRIVATE" ? "Private" : "Public",
+                          systemImage: space.visibility == "PRIVATE" ? "lock.fill" : "number")
+                        .font(.caption).foregroundStyle(.secondary)
+                    if let description = space.description, !description.isEmpty {
+                        Text(description).font(.subheadline)
+                    }
+                    Text("\(space.memberCount) member\(space.memberCount == 1 ? "" : "s")")
+                        .font(.caption).foregroundStyle(.secondary)
+                }
+                Spacer()
+                membershipButton
+            }
+
+            // Member avatar pile.
+            HStack(spacing: -8) {
+                ForEach(members.prefix(8)) { member in
+                    AvatarView(name: member.name, url: member.avatarUrl, size: 30)
+                        .overlay(Circle().stroke(Color(.systemBackground), lineWidth: 2))
+                }
+                if members.count > 8 {
+                    Text("+\(members.count - 8)").font(.caption).foregroundStyle(.secondary).padding(.leading, 12)
+                }
+            }
+        }
+    }
+
+    @ViewBuilder private var membershipButton: some View {
+        if space.isOwner {
+            Text("Owner").font(.caption.weight(.semibold)).foregroundStyle(.secondary)
+        } else if space.isMember {
+            Button("Leave") { Task { await model.leave() } }
+                .buttonStyle(.bordered)
+                .disabled(model.working)
+        } else if space.visibility == "PUBLIC" {
+            Button("Join") { Task { await model.join() } }
+                .buttonStyle(.borderedProminent)
+                .disabled(model.working)
+        }
+    }
+}
+
+private struct EventRow: View {
+    let event: EventSummary
+    var body: some View {
+        HStack(spacing: 12) {
+            VStack(spacing: 0) {
+                Text(event.startAt, format: .dateTime.month(.abbreviated)).font(.caption2).foregroundStyle(.tint)
+                Text(event.startAt, format: .dateTime.day()).font(.headline)
+            }
+            .frame(width: 44)
+            VStack(alignment: .leading, spacing: 2) {
+                Text(event.title).font(.subheadline.weight(.semibold)).lineLimit(1)
+                Text("\(event.startAt, format: .dateTime.weekday().hour().minute()) · \(event.counts.GOING) going")
+                    .font(.caption).foregroundStyle(.secondary)
+            }
+            Spacer()
+        }
+    }
+}
