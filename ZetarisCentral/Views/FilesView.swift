@@ -113,7 +113,7 @@ struct FilesView: View {
                         else { fileToView = FileRef(id: item.id, name: item.name) }
                     } label: {
                         HStack(spacing: 12) {
-                            Image(systemName: icon(for: item))
+                            Lucide(icon(for: item))
                                 .foregroundStyle(item.kind == "FOLDER" ? Color.accentColor : .secondary)
                                 .frame(width: 24)
                             VStack(alignment: .leading, spacing: 1) {
@@ -123,7 +123,7 @@ struct FilesView: View {
                                 }
                             }
                             Spacer()
-                            if item.kind == "FOLDER" { Lucide("chevron-right").font(.caption).foregroundStyle(.tertiary) }
+                            if item.kind == "FOLDER" { Lucide("chevron-right", size: 14).foregroundStyle(.tertiary) }
                         }
                     }
                     .swipeActions {
@@ -145,7 +145,7 @@ struct FilesView: View {
                         Button { showImporter = true } label: { Label { Text("Upload file") } icon: { Lucide("upload", size: 16) } }
                         Button { showNewFolder = true } label: { Label { Text("New folder") } icon: { Lucide("folder-plus", size: 16) } }
                     } label: {
-                        Image(systemName: model.busy ? "hourglass" : "plus")
+                        if model.busy { ProgressView().controlSize(.small) } else { Lucide("plus") }
                     }
                 }
             }
@@ -170,12 +170,12 @@ struct FilesView: View {
     }
 
     private func icon(for item: FileNode) -> String {
-        if item.kind == "FOLDER" { return "folder.fill" }
+        if item.kind == "FOLDER" { return "folder-closed" }
         let m = item.mimeType ?? ""
-        if m.hasPrefix("image/") { return "photo" }
-        if m.hasPrefix("video/") { return "film" }
-        if m == "application/pdf" { return "doc.richtext" }
-        return "doc"
+        if m.hasPrefix("image/") { return "image" }
+        if m.hasPrefix("video/") { return "video" }
+        if m == "application/pdf" { return "file-text" }
+        return "file-text"
     }
 
     private func sizeLabel(_ bytes: Int?) -> String {

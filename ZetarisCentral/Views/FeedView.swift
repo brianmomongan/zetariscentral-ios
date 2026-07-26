@@ -141,7 +141,7 @@ private struct ComposerView: View {
                             }
                         }
                     } label: {
-                        Label(audienceLabel, systemImage: audienceIcon).font(.subheadline)
+                        Label { Text(audienceLabel) } icon: { Lucide(audienceIcon, size: 16) }.font(.subheadline)
                     }
                     Spacer()
                     PhotosPicker(selection: $pickerItems, maxSelectionCount: 4, matching: .images) {
@@ -215,8 +215,8 @@ private struct ComposerView: View {
     }
     private var audienceIcon: String {
         if audience == "PRIVATE" { return "lock" }
-        if audience == "PEOPLE" { return "person.crop.circle" }
-        if audience.hasPrefix("group:") { return "person.2" }
+        if audience == "PEOPLE" { return "circle-user" }
+        if audience.hasPrefix("group:") { return "users-round" }
         return "globe"
     }
 
@@ -278,7 +278,7 @@ struct ContentUnavailableViewCompat: View {
     let message: String
     var body: some View {
         VStack(spacing: 8) {
-            Lucide("triangle-alert").font(.largeTitle).foregroundStyle(.secondary)
+            Lucide("triangle-alert", size: 34).foregroundStyle(.secondary)
             Text(title).font(.headline)
             Text(message).font(.subheadline).foregroundStyle(.secondary).multilineTextAlignment(.center)
         }

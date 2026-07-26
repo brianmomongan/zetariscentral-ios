@@ -243,13 +243,13 @@ private struct ActionBar: View {
                     Button { Task { await model.react(option.type) } } label: { Text("\(option.emoji)  \(option.label)") }
                 }
             } label: {
-                Label("\(post.reactions.total)", systemImage: post.reactions.mine != nil ? "hand.thumbsup.fill" : "hand.thumbsup")
+                Label { Text("\(post.reactions.total)") } icon: { Lucide("thumbs-up", size: 16) }
                     .foregroundStyle(post.reactions.mine != nil ? Color.accentColor : Color.secondary)
             }
             Label { Text("\(post.commentCount)") } icon: { Lucide("message-circle", size: 16) }
             Spacer()
             Button { Task { await model.toggleBookmark() } } label: {
-                Image(systemName: post.bookmarkedByMe ? "bookmark.fill" : "bookmark")
+                Lucide("bookmark", size: 18)
                     .foregroundStyle(post.bookmarkedByMe ? Color.accentColor : Color.secondary)
             }
         }
@@ -312,7 +312,7 @@ private struct CommentRow: View {
                         Task { await model.toggleCommentLike(comment.id) }
                     } label: {
                         HStack(spacing: 4) {
-                            Image(systemName: comment.likedByMe ? "heart.fill" : "heart")
+                            Lucide("heart", size: 15)
                             if comment.likeCount > 0 { Text("\(comment.likeCount)") }
                         }
                         .font(.caption)
@@ -346,7 +346,7 @@ private struct CommentComposer: View {
             Button {
                 Task { await model.addComment() }
             } label: {
-                Lucide("send").font(.title2)
+                Lucide("send", size: 24)
             }
             .disabled(model.commentText.trimmingCharacters(in: .whitespaces).isEmpty || model.sending)
         }

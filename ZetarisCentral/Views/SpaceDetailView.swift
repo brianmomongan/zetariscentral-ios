@@ -138,8 +138,8 @@ private struct SpaceHeader: View {
         VStack(alignment: .leading, spacing: 10) {
             HStack {
                 VStack(alignment: .leading, spacing: 4) {
-                    Label(space.visibility == "PRIVATE" ? "Private" : "Public",
-                          systemImage: space.visibility == "PRIVATE" ? "lock.fill" : "number")
+                    Label { Text(space.visibility == "PRIVATE" ? "Private" : "Public") }
+                        icon: { Lucide(space.visibility == "PRIVATE" ? "lock" : "hash", size: 13) }
                         .font(.caption).foregroundStyle(.secondary)
                     if let description = space.description, !description.isEmpty {
                         Text(description).font(.subheadline)

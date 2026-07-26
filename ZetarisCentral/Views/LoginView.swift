@@ -27,7 +27,10 @@ struct LoginView: View {
         VStack(spacing: 20) {
             Spacer()
             VStack(spacing: 6) {
-                Lucide("send").font(.system(size: 44)).foregroundStyle(.tint)
+                ZStack {
+                    Circle().fill(Theme.sky).frame(width: 76, height: 76)
+                    Lucide("zap", size: 40).foregroundStyle(.white)
+                }
                 Text("Zetaris Central").font(.largeTitle.bold())
                 Text("Sign in with your Zetaris account").font(.subheadline).foregroundStyle(.secondary)
             }

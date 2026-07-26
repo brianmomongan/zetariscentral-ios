@@ -103,7 +103,7 @@ private struct SpaceListRow: View {
         HStack(spacing: 12) {
             ZStack {
                 RoundedRectangle(cornerRadius: 10).fill(.tint.opacity(0.15)).frame(width: 44, height: 44)
-                Image(systemName: space.visibility == "PRIVATE" ? "lock.fill" : "number")
+                Lucide(space.visibility == "PRIVATE" ? "lock" : "hash")
                     .foregroundStyle(.tint)
             }
             VStack(alignment: .leading, spacing: 2) {

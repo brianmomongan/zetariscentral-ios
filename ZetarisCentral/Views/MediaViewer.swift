@@ -75,7 +75,7 @@ private struct MediaComments: View {
                     .textFieldStyle(.roundedBorder).lineLimit(1...3)
                 Button {
                     Task { await send() }
-                } label: { Lucide("send").font(.title2) }
+                } label: { Lucide("send", size: 24) }
                 .disabled(text.trimmingCharacters(in: .whitespaces).isEmpty)
             }
             .padding(10)

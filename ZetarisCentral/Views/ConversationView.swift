@@ -281,14 +281,14 @@ private struct Composer: View {
             .padding(.horizontal).padding(.top, 6)
         }
         HStack(spacing: 8) {
-            PhotosPicker(selection: $photoItem, matching: .images) { Lucide("image").font(.title3) }
+            PhotosPicker(selection: $photoItem, matching: .images) { Lucide("image", size: 22) }
             Menu {
                 ForEach(quickEmoji, id: \.self) { e in Button(e) { model.draft += e } }
-            } label: { Lucide("smile").font(.title3) }
+            } label: { Lucide("smile", size: 22) }
             TextField("Message…", text: $model.draft, axis: .vertical)
                 .textFieldStyle(.roundedBorder).lineLimit(1...4)
                 .onChange(of: model.draft) { _ in model.onTyping() }
-            Button { Task { await model.send() } } label: { Lucide("send").font(.title2) }
+            Button { Task { await model.send() } } label: { Lucide("send", size: 24) }
                 .disabled(model.draft.trimmingCharacters(in: .whitespaces).isEmpty && model.pendingImage == nil)
         }
         .padding(12)
@@ -306,7 +306,7 @@ struct ImageLightbox: View {
             VStack {
                 HStack {
                     Spacer()
-                    Button { dismiss() } label: { Lucide("x").font(.title).foregroundStyle(.white) }.padding()
+                    Button { dismiss() } label: { Lucide("x", size: 28).foregroundStyle(.white) }.padding()
                 }
                 Spacer()
             }

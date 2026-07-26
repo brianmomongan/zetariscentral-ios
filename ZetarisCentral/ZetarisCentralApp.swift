@@ -9,7 +9,12 @@ struct ZetarisCentralApp: App {
             RootView()
                 .environmentObject(auth)
                 .onOpenURL { url in
-                    guard url.scheme == "zetariscentral", url.host == "auth" else { return }
+                    guard url.scheme == "zetariscentral" else { return }
+                    if url.host == "tab", let n = Int(url.lastPathComponent) {
+                        TabRouter.shared.selection = n
+                        return
+                    }
+                    guard url.host == "auth" else { return }
                     let items = URLComponents(url: url, resolvingAgainstBaseURL: false)?.queryItems
                     if let token = items?.first(where: { $0.name == "token" })?.value {
                         auth.onExternalToken(token)
