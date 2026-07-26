@@ -96,6 +96,10 @@ struct PostDetailResponse: Codable {
     let post: Post
 }
 
+struct MediaCommentsResponse: Codable {
+    let comments: [Comment]
+}
+
 struct ReactResponse: Codable {
     let mine: String?
 }

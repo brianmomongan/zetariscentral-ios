@@ -85,6 +85,8 @@ struct PostDetailView: View {
     @Environment(\.dismiss) private var dismiss
     @StateObject private var model: PostDetailViewModel
     @State private var showDelete = false
+    @State private var presentViewer = false
+    @State private var viewerStart = 0
 
     init(postId: String) {
         _model = StateObject(wrappedValue: PostDetailViewModel(postId: postId))
@@ -112,17 +114,27 @@ struct PostDetailView: View {
                         } else if !post.content.isEmpty {
                             RichText(post.content)
                         }
-                        ForEach(post.images, id: \.self) { img in
+                        ForEach(Array(post.images.enumerated()), id: \.offset) { i, img in
                             AsyncImage(url: Config.mediaURL(img)) { image in
                                 image.resizable().scaledToFit()
                             } placeholder: {
                                 Color.gray.opacity(0.1).frame(height: 200)
                             }
                             .clipShape(RoundedRectangle(cornerRadius: 12))
+                            .contentShape(Rectangle())
+                            .onTapGesture { openViewer(index: mediaIndex(image: i, post: post)) }
                         }
-                        ForEach(post.videos, id: \.self) { video in
+                        ForEach(Array(post.videos.enumerated()), id: \.offset) { i, video in
                             if let url = Config.mediaURL(video) {
-                                VideoPlayerView(url: url).frame(height: 220).clipShape(RoundedRectangle(cornerRadius: 12))
+                                VStack(alignment: .leading, spacing: 4) {
+                                    VideoPlayerView(url: url).frame(height: 220).clipShape(RoundedRectangle(cornerRadius: 12))
+                                    if post.mediaItems?.contains(where: { $0.type == "VIDEO" }) == true {
+                                        Button { openViewer(index: mediaIndex(video: i, post: post)) } label: {
+                                            Label("Comment on this video", systemImage: "bubble.left")
+                                        }
+                                        .font(.caption)
+                                    }
+                                }
                             }
                         }
                         if let link = post.link { LinkCardView(link: link) }
@@ -154,7 +166,25 @@ struct PostDetailView: View {
             Button("Delete", role: .destructive) { Task { if await model.deletePost() { dismiss() } } }
             Button("Cancel", role: .cancel) {}
         } message: { Text("This can't be undone.") }
+        .fullScreenCover(isPresented: $presentViewer) {
+            if let items = model.post?.mediaItems, !items.isEmpty {
+                PostMediaViewer(mediaItems: items, index: viewerStart)
+            }
+        }
         .task { await model.load() }
+    }
+
+    private func openViewer(index: Int) { viewerStart = index; presentViewer = true }
+
+    private func mediaIndex(image i: Int, post: Post) -> Int {
+        guard let items = post.mediaItems else { return 0 }
+        let imgs = items.enumerated().filter { $0.element.type == "IMAGE" }
+        return imgs.indices.contains(i) ? imgs[i].offset : 0
+    }
+    private func mediaIndex(video i: Int, post: Post) -> Int {
+        guard let items = post.mediaItems else { return 0 }
+        let vids = items.enumerated().filter { $0.element.type == "VIDEO" }
+        return vids.indices.contains(i) ? vids[i].offset : 0
     }
 }
 
