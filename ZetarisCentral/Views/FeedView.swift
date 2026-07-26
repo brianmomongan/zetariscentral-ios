@@ -22,10 +22,10 @@ final class FeedViewModel: ObservableObject {
         if let res: GroupsResponse = try? await APIClient.shared.get("/groups") { groups = res.groups }
     }
 
-    func createPost(_ content: String, visibility: String, groupId: String?, media: [MediaRef]) async -> Bool {
-        struct Body: Codable { let content: String; let visibility: String; let groupId: String?; let media: [MediaRef] }
+    func createPost(_ content: String, visibility: String, groupId: String?, peopleUsernames: [String], media: [MediaRef]) async -> Bool {
+        struct Body: Codable { let content: String; let visibility: String; let groupId: String?; let peopleUsernames: [String]; let media: [MediaRef] }
         do {
-            let _: CreatePostResponse = try await APIClient.shared.post("/posts", body: Body(content: content, visibility: visibility, groupId: groupId, media: media))
+            let _: CreatePostResponse = try await APIClient.shared.post("/posts", body: Body(content: content, visibility: visibility, groupId: groupId, peopleUsernames: peopleUsernames, media: media))
             await load()
             return true
         } catch {
@@ -81,8 +81,8 @@ struct FeedView: View {
                 }
             }
             .sheet(isPresented: $showComposer) {
-                ComposerView(groups: model.groups) { content, visibility, groupId, media in
-                    let ok = await model.createPost(content, visibility: visibility, groupId: groupId, media: media)
+                ComposerView(groups: model.groups) { content, visibility, groupId, people, media in
+                    let ok = await model.createPost(content, visibility: visibility, groupId: groupId, peopleUsernames: people, media: media)
                     if ok { showComposer = false }
                 }
             }
@@ -93,14 +93,18 @@ struct FeedView: View {
 
 private struct ComposerView: View {
     let groups: [GroupSummary]
-    let onPost: (_ content: String, _ visibility: String, _ groupId: String?, _ media: [MediaRef]) async -> Void
+    let onPost: (_ content: String, _ visibility: String, _ groupId: String?, _ people: [String], _ media: [MediaRef]) async -> Void
     @Environment(\.dismiss) private var dismiss
     @State private var text = ""
-    @State private var audience = "COMPANY" // COMPANY | PRIVATE | group:<id>
+    @State private var audience = "COMPANY" // COMPANY | PRIVATE | PEOPLE | group:<id>
     @State private var posting = false
     @State private var pickerItems: [PhotosPickerItem] = []
     @State private var uploaded: [MediaRef] = []
     @State private var uploading = false
+    // Specific-people picker
+    @State private var selectedPeople: [PersonRef] = []
+    @State private var peopleQuery = ""
+    @State private var peopleResults: [PersonRef] = []
 
     var body: some View {
         NavigationStack {
@@ -109,6 +113,7 @@ private struct ComposerView: View {
                     Menu {
                         Button { audience = "COMPANY" } label: { Label("Everyone", systemImage: "globe") }
                         Button { audience = "PRIVATE" } label: { Label("Only me", systemImage: "lock") }
+                        Button { audience = "PEOPLE" } label: { Label("Specific people", systemImage: "person.crop.circle") }
                         if !groups.isEmpty {
                             Divider()
                             ForEach(groups) { group in
@@ -124,6 +129,8 @@ private struct ComposerView: View {
                     }
                 }
                 .padding(.horizontal).padding(.top, 8)
+
+                if audience == "PEOPLE" { peoplePicker }
 
                 if uploading || !uploaded.isEmpty {
                     HStack {
@@ -146,9 +153,12 @@ private struct ComposerView: View {
                 ToolbarItem(placement: .confirmationAction) {
                     Button("Post") {
                         posting = true
-                        let visibility = audience == "PRIVATE" ? "PRIVATE" : audience.hasPrefix("group:") ? "GROUP" : "COMPANY"
+                        let visibility = audience == "PRIVATE" ? "PRIVATE"
+                            : audience == "PEOPLE" ? "PEOPLE"
+                            : audience.hasPrefix("group:") ? "GROUP" : "COMPANY"
                         let groupId = audience.hasPrefix("group:") ? String(audience.dropFirst(6)) : nil
-                        Task { await onPost(text, visibility, groupId, uploaded); posting = false }
+                        let people = audience == "PEOPLE" ? selectedPeople.compactMap { $0.username } : []
+                        Task { await onPost(text, visibility, groupId, people, uploaded); posting = false }
                     }
                     .disabled((text.trimmingCharacters(in: .whitespacesAndNewlines).isEmpty && uploaded.isEmpty) || posting || uploading)
                 }
@@ -175,13 +185,65 @@ private struct ComposerView: View {
 
     private var audienceLabel: String {
         if audience == "PRIVATE" { return "Only me" }
+        if audience == "PEOPLE" { return selectedPeople.isEmpty ? "Specific people" : "\(selectedPeople.count) people" }
         if audience.hasPrefix("group:"), let g = groups.first(where: { "group:\($0.id)" == audience }) { return g.name }
         return "Everyone"
     }
     private var audienceIcon: String {
         if audience == "PRIVATE" { return "lock" }
+        if audience == "PEOPLE" { return "person.crop.circle" }
         if audience.hasPrefix("group:") { return "person.2" }
         return "globe"
+    }
+
+    private var peoplePicker: some View {
+        VStack(alignment: .leading, spacing: 6) {
+            if !selectedPeople.isEmpty {
+                ScrollView(.horizontal, showsIndicators: false) {
+                    HStack(spacing: 6) {
+                        ForEach(selectedPeople) { person in
+                            HStack(spacing: 4) {
+                                Text(person.name).font(.caption)
+                                Button { selectedPeople.removeAll { $0.id == person.id } } label: {
+                                    Image(systemName: "xmark.circle.fill").foregroundStyle(.secondary)
+                                }
+                            }
+                            .padding(.horizontal, 8).padding(.vertical, 4)
+                            .background(.quaternary, in: Capsule())
+                        }
+                    }
+                }
+            }
+            TextField("Search people to add", text: $peopleQuery)
+                .textFieldStyle(.roundedBorder)
+                .textInputAutocapitalization(.never)
+                .onChange(of: peopleQuery) { q in Task { await searchPeople(q) } }
+            ForEach(peopleResults.prefix(4)) { person in
+                Button {
+                    if !selectedPeople.contains(where: { $0.id == person.id }) { selectedPeople.append(person) }
+                    peopleQuery = ""
+                    peopleResults = []
+                } label: {
+                    HStack(spacing: 8) {
+                        AvatarView(name: person.name, url: person.avatarUrl, size: 28)
+                        Text(person.name).font(.subheadline)
+                        Spacer()
+                        Image(systemName: "plus.circle").foregroundStyle(.tint)
+                    }
+                }
+                .buttonStyle(.plain)
+            }
+        }
+        .padding(.horizontal).padding(.top, 6)
+    }
+
+    private func searchPeople(_ q: String) async {
+        let query = q.trimmingCharacters(in: .whitespaces)
+        guard !query.isEmpty else { peopleResults = []; return }
+        let encoded = query.addingPercentEncoding(withAllowedCharacters: .urlQueryAllowed) ?? query
+        if let res: PeopleResponse = try? await APIClient.shared.get("/people?q=\(encoded)") {
+            peopleResults = res.people.filter { p in !selectedPeople.contains(where: { $0.id == p.id }) }
+        }
     }
 }
 

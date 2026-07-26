@@ -92,6 +92,36 @@ struct APIClient {
         return try JSONDecoder().decode(MediaRef.self, from: respData)
     }
 
+    /// Upload a file into a drive folder (the non-v1 /api/files/upload route).
+    func uploadFileToDrive(_ data: Data, filename: String, mimeType: String, drive: String, parentId: String?) async throws {
+        var url = Config.apiOrigin
+        url.append(path: "/api/files/upload")
+        var req = URLRequest(url: url)
+        req.httpMethod = "POST"
+        if let token = TokenStore.shared.token {
+            req.setValue("Bearer \(token)", forHTTPHeaderField: "Authorization")
+        }
+        let boundary = "Boundary-\(UUID().uuidString)"
+        req.setValue("multipart/form-data; boundary=\(boundary)", forHTTPHeaderField: "Content-Type")
+        var body = Data()
+        func addField(_ name: String, _ value: String) {
+            body.append("--\(boundary)\r\nContent-Disposition: form-data; name=\"\(name)\"\r\n\r\n\(value)\r\n".data(using: .utf8)!)
+        }
+        addField("drive", drive)
+        if let parentId { addField("parentId", parentId) }
+        body.append("--\(boundary)\r\n".data(using: .utf8)!)
+        body.append("Content-Disposition: form-data; name=\"file\"; filename=\"\(filename)\"\r\n".data(using: .utf8)!)
+        body.append("Content-Type: \(mimeType)\r\n\r\n".data(using: .utf8)!)
+        body.append(data)
+        body.append("\r\n--\(boundary)--\r\n".data(using: .utf8)!)
+        req.httpBody = body
+
+        let (_, response) = try await session.data(for: req)
+        guard let http = response as? HTTPURLResponse, (200..<300).contains(http.statusCode) else {
+            throw APIError.server("Upload failed.")
+        }
+    }
+
     private func request<T: Decodable, B: Encodable>(
         _ path: String, method: String, body: B?, auth: Bool
     ) async throws -> T {

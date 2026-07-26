@@ -404,6 +404,20 @@ struct MediaRef: Codable, Hashable {
     let type: String   // IMAGE | VIDEO
 }
 
+// MARK: - People (directory / picker)
+
+struct PersonRef: Codable, Identifiable, Hashable {
+    let id: String
+    let name: String
+    let username: String?
+    let title: String?
+    let avatarUrl: String?
+}
+
+struct PeopleResponse: Codable {
+    let people: [PersonRef]
+}
+
 struct CreatedPost: Codable {
     let id: String
     let content: String
