@@ -14,6 +14,7 @@ enum AppRoute: Hashable {
     case news                  // news screen
     case settings              // edit profile
     case search                // search screen
+    case files                 // files browser
 }
 
 @ViewBuilder
@@ -29,5 +30,6 @@ func destinationView(for route: AppRoute) -> some View {
     case .news: NewsView()
     case .settings: SettingsView()
     case .search: SearchView()
+    case .files: FilesView()
     }
 }

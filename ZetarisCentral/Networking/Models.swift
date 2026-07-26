@@ -376,6 +376,27 @@ struct NewsResponse: Codable {
     let articles: [Article]
 }
 
+// MARK: - Files
+
+struct FileNode: Codable, Identifiable {
+    let id: String
+    let name: String
+    let kind: String       // FOLDER | FILE
+    let mimeType: String?
+    let size: Int?
+}
+
+struct Breadcrumb: Codable, Identifiable {
+    let id: String
+    let name: String
+}
+
+struct FilesResponse: Codable {
+    let drive: String
+    let breadcrumb: [Breadcrumb]
+    let items: [FileNode]
+}
+
 struct CreatedPost: Codable {
     let id: String
     let content: String

@@ -67,6 +67,7 @@ struct FeedView: View {
                         }
                         Button { path.append(AppRoute.search) } label: { Label("Search", systemImage: "magnifyingglass") }
                         Button { path.append(AppRoute.news) } label: { Label("News", systemImage: "newspaper") }
+                        Button { path.append(AppRoute.files) } label: { Label("Files", systemImage: "folder") }
                         Button { path.append(AppRoute.groups) } label: { Label("Groups", systemImage: "person.2") }
                         Button { path.append(AppRoute.settings) } label: { Label("Settings", systemImage: "gear") }
                     } label: {
