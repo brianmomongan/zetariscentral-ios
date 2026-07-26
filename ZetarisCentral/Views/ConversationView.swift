@@ -170,7 +170,7 @@ struct ConversationView: View {
         .navigationBarTitleDisplayMode(.inline)
         .toolbar {
             if isGroup {
-                ToolbarItem(placement: .topBarTrailing) { Button { managing = true } label: { Image(systemName: "person.2") } }
+                ToolbarItem(placement: .topBarTrailing) { Button { managing = true } label: { Lucide("users-round") } }
             }
         }
         .onChange(of: photoItem) { item in Task { await model.attach(item) } }
@@ -239,7 +239,7 @@ private struct MessageBubble: View {
                         .onTapGesture { onOpenImage(url) }
                 }
                 if let file = message.file {
-                    Label(file.name, systemImage: "doc")
+                    Label { Text(file.name) } icon: { Lucide("file-text", size: 16) }
                         .font(.subheadline).padding(10)
                         .background(bubbleColor, in: RoundedRectangle(cornerRadius: 16))
                         .foregroundStyle(isMine ? .white : .primary)
@@ -273,22 +273,22 @@ private struct Composer: View {
         Divider()
         if model.pendingImage != nil {
             HStack {
-                Image(systemName: "photo").foregroundStyle(.secondary)
+                Lucide("image").foregroundStyle(.secondary)
                 Text("Photo attached").font(.caption).foregroundStyle(.secondary)
                 Spacer()
-                Button { model.pendingImage = nil } label: { Image(systemName: "xmark.circle.fill").foregroundStyle(.secondary) }
+                Button { model.pendingImage = nil } label: { Lucide("x").foregroundStyle(.secondary) }
             }
             .padding(.horizontal).padding(.top, 6)
         }
         HStack(spacing: 8) {
-            PhotosPicker(selection: $photoItem, matching: .images) { Image(systemName: "photo").font(.title3) }
+            PhotosPicker(selection: $photoItem, matching: .images) { Lucide("image").font(.title3) }
             Menu {
                 ForEach(quickEmoji, id: \.self) { e in Button(e) { model.draft += e } }
-            } label: { Image(systemName: "face.smiling").font(.title3) }
+            } label: { Lucide("smile").font(.title3) }
             TextField("Message…", text: $model.draft, axis: .vertical)
                 .textFieldStyle(.roundedBorder).lineLimit(1...4)
                 .onChange(of: model.draft) { _ in model.onTyping() }
-            Button { Task { await model.send() } } label: { Image(systemName: "arrow.up.circle.fill").font(.title2) }
+            Button { Task { await model.send() } } label: { Lucide("send").font(.title2) }
                 .disabled(model.draft.trimmingCharacters(in: .whitespaces).isEmpty && model.pendingImage == nil)
         }
         .padding(12)
@@ -306,7 +306,7 @@ struct ImageLightbox: View {
             VStack {
                 HStack {
                     Spacer()
-                    Button { dismiss() } label: { Image(systemName: "xmark.circle.fill").font(.title).foregroundStyle(.white) }.padding()
+                    Button { dismiss() } label: { Lucide("x").font(.title).foregroundStyle(.white) }.padding()
                 }
                 Spacer()
             }
@@ -337,7 +337,7 @@ private struct ManageGroupSheet: View {
                             AvatarView(name: member.name, url: member.avatarUrl, size: 28)
                             Text(member.name)
                             Spacer()
-                            Button(role: .destructive) { Task { await model.removeMember(member.id) } } label: { Image(systemName: "minus.circle") }
+                            Button(role: .destructive) { Task { await model.removeMember(member.id) } } label: { Lucide("circle-minus") }
                         }
                     }
                 }
@@ -348,7 +348,7 @@ private struct ManageGroupSheet: View {
                     ForEach(results.prefix(5)) { person in
                         Button {
                             Task { await model.addMembers([person.id]); query = ""; results = [] }
-                        } label: { Label("Add \(person.name)", systemImage: "plus.circle") }
+                        } label: { Label { Text("Add \(person.name)") } icon: { Lucide("circle-plus", size: 16) } }
                     }
                 }
                 Section {

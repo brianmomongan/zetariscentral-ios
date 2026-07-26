@@ -44,16 +44,16 @@ struct EventDetailView: View {
                 ScrollView {
                     VStack(alignment: .leading, spacing: 16) {
                         Text(event.title).font(.title2.bold())
-                        Label(event.startAt.formatted(date: .complete, time: .shortened), systemImage: "calendar")
+                        Label { Text(event.startAt.formatted(date: .complete, time: .shortened)) } icon: { Lucide("calendar-days", size: 16) }
                             .font(.subheadline)
                         if let endAt = event.endAt {
-                            Label("Until \(endAt.formatted(date: .omitted, time: .shortened))", systemImage: "clock")
+                            Label { Text("Until \(endAt.formatted(date: .omitted, time: .shortened))") } icon: { Lucide("clock", size: 16) }
                                 .font(.subheadline).foregroundStyle(.secondary)
                         }
                         if let location = event.location {
-                            Label(location, systemImage: "mappin.and.ellipse").font(.subheadline)
+                            Label { Text(location) } icon: { Lucide("map-pin", size: 16) }.font(.subheadline)
                         }
-                        Label("Hosted by \(event.host.name)", systemImage: "person").font(.subheadline).foregroundStyle(.secondary)
+                        Label { Text("Hosted by \(event.host.name)") } icon: { Lucide("user", size: 16) }.font(.subheadline).foregroundStyle(.secondary)
 
                         if let description = event.description, !description.isEmpty {
                             Text(description).font(.body)

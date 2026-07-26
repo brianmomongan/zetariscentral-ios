@@ -47,12 +47,12 @@ struct PostRow: View {
     var body: some View {
         VStack(alignment: .leading, spacing: 8) {
             if post.isAnnouncement {
-                Label("Announcement", systemImage: "megaphone.fill")
+                Label { Text("Announcement") } icon: { Lucide("megaphone", size: 16) }
                     .font(.caption.weight(.semibold))
                     .foregroundStyle(Theme.announce)
             }
             if post.pinned {
-                Label("Pinned", systemImage: "pin.fill").font(.caption2).foregroundStyle(.secondary)
+                Label { Text("Pinned") } icon: { Lucide("pin", size: 16) }.font(.caption2).foregroundStyle(.secondary)
             }
 
             HStack(spacing: 10) {
@@ -82,7 +82,7 @@ struct PostRow: View {
                     fileToView = FileRef(id: fileId(link), name: link.title ?? "file")
                 } label: {
                     HStack(spacing: 8) {
-                        Image(systemName: (link.image?.isEmpty == false) ? "photo" : "doc.text")
+                        Lucide((link.image?.isEmpty == false) ? "image" : "file-text", size: 18)
                         Text(link.title ?? "File").font(.subheadline.weight(.medium)).lineLimit(1)
                         if let size = link.description?.components(separatedBy: " · ").first, !size.isEmpty {
                             Text("· \(size)").font(.caption).foregroundStyle(.secondary)
@@ -166,7 +166,7 @@ struct PostRow: View {
                         Button { Task { await react(rt.type) } } label: { Text("\(rt.emoji)  \(rt.label)") }
                     }
                 } label: {
-                    Label(reactionLabel(mine), systemImage: mine != nil ? "hand.thumbsup.fill" : "hand.thumbsup")
+                    Label { Text(reactionLabel(mine)) } icon: { Lucide("thumbs-up", size: 18) }
                         .foregroundStyle(mine != nil ? Color.accentColor : Color.secondary)
                 } primaryAction: {
                     Task { await react(mine ?? "LIKE") }
@@ -174,11 +174,12 @@ struct PostRow: View {
                 .buttonStyle(.borderless)
 
                 Spacer()
-                Label("Comment", systemImage: "bubble.left").foregroundStyle(.secondary)
+                Label { Text("Comment") } icon: { Lucide("message-circle", size: 18) }
+                    .foregroundStyle(.secondary)
                 Spacer()
 
                 Button { Task { await toggleBookmark() } } label: {
-                    Label(bookmarked ? "Saved" : "Save", systemImage: bookmarked ? "bookmark.fill" : "bookmark")
+                    Label { Text(bookmarked ? "Saved" : "Save") } icon: { Lucide("bookmark", size: 18) }
                         .foregroundStyle(bookmarked ? Color.accentColor : Color.secondary)
                 }
                 .buttonStyle(.borderless)

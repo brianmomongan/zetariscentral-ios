@@ -27,7 +27,7 @@ struct LoginView: View {
         VStack(spacing: 20) {
             Spacer()
             VStack(spacing: 6) {
-                Image(systemName: "bolt.horizontal.circle.fill").font(.system(size: 44)).foregroundStyle(.tint)
+                Lucide("send").font(.system(size: 44)).foregroundStyle(.tint)
                 Text("Zetaris Central").font(.largeTitle.bold())
                 Text("Sign in with your Zetaris account").font(.subheadline).foregroundStyle(.secondary)
             }
@@ -60,7 +60,7 @@ struct LoginView: View {
                     auth.clearError()
                     if let url = URL(string: "\(Config.origin)/api/auth/microsoft?mobile=1") { openURL(url) }
                 } label: {
-                    Label("Sign in with Microsoft", systemImage: "building.2").frame(maxWidth: .infinity)
+                    Label { Text("Sign in with Microsoft") } icon: { Lucide("building-2", size: 16) }.frame(maxWidth: .infinity)
                 }
                 .buttonStyle(.bordered).controlSize(.large)
             }

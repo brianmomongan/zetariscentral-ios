@@ -74,7 +74,7 @@ struct NewsView: View {
                                     }
                                 }
                                 .swipeActions {
-                                    Button { sharing = article } label: { Label("Share", systemImage: "square.and.arrow.up") }.tint(.accentColor)
+                                    Button { sharing = article } label: { Label { Text("Share") } icon: { Lucide("share-2", size: 16) } }.tint(.accentColor)
                                 }
                             }
                         }
@@ -85,7 +85,7 @@ struct NewsView: View {
         .navigationTitle("News")
         .toolbar {
             ToolbarItem(placement: .topBarTrailing) {
-                Button { model.showAdd = true } label: { Image(systemName: "plus") }
+                Button { model.showAdd = true } label: { Lucide("plus") }
             }
         }
         .alert("Follow a topic", isPresented: $model.showAdd) {

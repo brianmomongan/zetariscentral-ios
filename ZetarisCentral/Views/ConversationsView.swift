@@ -55,7 +55,7 @@ struct ConversationsView: View {
             .navigationTitle("Messages")
             .toolbar {
                 ToolbarItem(placement: .topBarTrailing) {
-                    Button { composing = true } label: { Image(systemName: "square.and.pencil") }
+                    Button { composing = true } label: { Lucide("square-pen") }
                 }
             }
             .sheet(isPresented: $composing) {
@@ -116,7 +116,7 @@ private struct ConversationRow: View {
             if convo.isGroup {
                 ZStack {
                     Circle().fill(.tint.opacity(0.2)).frame(width: 44, height: 44)
-                    Image(systemName: "person.2.fill").foregroundStyle(.tint)
+                    Lucide("users-round").foregroundStyle(.tint)
                 }
             } else {
                 AvatarView(name: convo.members.first?.name ?? convo.title,

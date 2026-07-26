@@ -19,6 +19,9 @@ targets:
         GENERATE_INFOPLIST_FILE: NO
         TARGETED_DEVICE_FAMILY: "1,2"
         SWIFT_VERSION: "5.0"
+        # No custom app icon yet; the Lucide asset catalog would otherwise make
+        # the compiler demand an AppIcon set.
+        ASSETCATALOG_COMPILER_APPICON_NAME: ""
         # Entitlements grant the Keychain access group so the session token
         # persists across launches (without this, SecItemAdd fails -34018 on
         # unsigned/simulator builds and users get logged out every cold start).

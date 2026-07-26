@@ -49,7 +49,7 @@ struct GroupsView: View {
         .navigationTitle("Groups")
         .toolbar {
             ToolbarItem(placement: .topBarTrailing) {
-                Button { model.showCreate = true } label: { Image(systemName: "plus") }
+                Button { model.showCreate = true } label: { Lucide("plus") }
             }
         }
         .alert("New group", isPresented: $model.showCreate) {
@@ -143,7 +143,7 @@ struct GroupDetailView: View {
                             }
                             .swipeActions {
                                 if group.isOwner && !member.isOwner {
-                                    Button(role: .destructive) { Task { await model.remove(member.id) } } label: { Label("Remove", systemImage: "minus.circle") }
+                                    Button(role: .destructive) { Task { await model.remove(member.id) } } label: { Label { Text("Remove") } icon: { Lucide("circle-minus", size: 16) } }
                                 }
                             }
                         }

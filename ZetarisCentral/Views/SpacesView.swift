@@ -55,7 +55,7 @@ struct SpacesView: View {
             .navigationTitle("Spaces")
             .toolbar {
                 ToolbarItem(placement: .topBarTrailing) {
-                    Button { showCreate = true } label: { Image(systemName: "plus") }
+                    Button { showCreate = true } label: { Lucide("plus") }
                 }
             }
             .sheet(isPresented: $showCreate) { NewSpaceSheet(model: model) }

@@ -94,7 +94,7 @@ struct SpaceDetailView: View {
         .toolbar {
             if model.data?.space.canPost == true {
                 ToolbarItem(placement: .topBarTrailing) {
-                    Button { composing = true } label: { Image(systemName: "square.and.pencil") }
+                    Button { composing = true } label: { Lucide("square-pen") }
                 }
             }
         }

@@ -50,7 +50,7 @@ struct FileViewerSheet: View {
             .toolbar {
                 ToolbarItem(placement: .confirmationAction) { Button("Done") { dismiss() } }
                 ToolbarItem(placement: .topBarLeading) {
-                    Button { openURL(Config.fileURL(fileId)) } label: { Image(systemName: "arrow.up.forward.app") }
+                    Button { openURL(Config.fileURL(fileId)) } label: { Lucide("external-link") }
                 }
             }
             .task { await loader.load(fileId: fileId, name: name) }

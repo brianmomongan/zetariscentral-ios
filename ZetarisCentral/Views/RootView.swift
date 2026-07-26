@@ -21,15 +21,15 @@ struct MainTabView: View {
     var body: some View {
         TabView {
             FeedView()
-                .tabItem { Label("Home", systemImage: "house") }
+                .tabItem { Label("Home", image: "lucide-house") }
             SpacesView()
-                .tabItem { Label("Spaces", systemImage: "number") }
+                .tabItem { Label("Spaces", image: "lucide-hash") }
             EventsView()
-                .tabItem { Label("Events", systemImage: "calendar") }
+                .tabItem { Label("Events", image: "lucide-calendar-days") }
             NotificationsView()
-                .tabItem { Label("Activity", systemImage: "bell") }
+                .tabItem { Label("Activity", image: "lucide-bell") }
             ConversationsView()
-                .tabItem { Label("Messages", systemImage: "message") }
+                .tabItem { Label("Messages", image: "lucide-message-circle") }
         }
     }
 }

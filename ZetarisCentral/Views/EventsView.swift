@@ -59,7 +59,7 @@ struct EventsView: View {
             .navigationTitle("Events")
             .toolbar {
                 ToolbarItem(placement: .topBarTrailing) {
-                    Button { showNew = true } label: { Image(systemName: "plus") }
+                    Button { showNew = true } label: { Lucide("plus") }
                 }
             }
             .sheet(isPresented: $showNew) { NewEventSheet(model: model) }

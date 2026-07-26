@@ -94,7 +94,7 @@ struct FilesView: View {
                     Button {
                         model.up()
                     } label: {
-                        Label(model.stack.dropLast().last?.name ?? "Back", systemImage: "chevron.left")
+                        Label { Text(model.stack.dropLast().last?.name ?? "Back") } icon: { Lucide("chevron-left", size: 16) }
                     }
                     Spacer()
                     Text(model.stack.last?.name ?? "").font(.subheadline.weight(.semibold)).lineLimit(1)
@@ -123,13 +123,13 @@ struct FilesView: View {
                                 }
                             }
                             Spacer()
-                            if item.kind == "FOLDER" { Image(systemName: "chevron.right").font(.caption).foregroundStyle(.tertiary) }
+                            if item.kind == "FOLDER" { Lucide("chevron-right").font(.caption).foregroundStyle(.tertiary) }
                         }
                     }
                     .swipeActions {
                         if model.canWrite {
-                            Button(role: .destructive) { Task { await model.delete(item.id) } } label: { Label("Delete", systemImage: "trash") }
-                            Button { renaming = item; renameText = item.name } label: { Label("Rename", systemImage: "pencil") }.tint(.accentColor)
+                            Button(role: .destructive) { Task { await model.delete(item.id) } } label: { Label { Text("Delete") } icon: { Lucide("trash-2", size: 16) } }
+                            Button { renaming = item; renameText = item.name } label: { Label { Text("Rename") } icon: { Lucide("pencil", size: 16) } }.tint(.accentColor)
                         }
                     }
                 }
@@ -142,8 +142,8 @@ struct FilesView: View {
             if model.canWrite {
                 ToolbarItem(placement: .topBarTrailing) {
                     Menu {
-                        Button { showImporter = true } label: { Label("Upload file", systemImage: "arrow.up.doc") }
-                        Button { showNewFolder = true } label: { Label("New folder", systemImage: "folder.badge.plus") }
+                        Button { showImporter = true } label: { Label { Text("Upload file") } icon: { Lucide("upload", size: 16) } }
+                        Button { showNewFolder = true } label: { Label { Text("New folder") } icon: { Lucide("folder-plus", size: 16) } }
                     } label: {
                         Image(systemName: model.busy ? "hourglass" : "plus")
                     }

@@ -80,21 +80,21 @@ struct FeedView: View {
                 ToolbarItem(placement: .topBarLeading) {
                     Menu {
                         if let id = auth.currentUser?.id {
-                            Button { path.append(AppRoute.profile(id)) } label: { Label("My profile", systemImage: "person") }
+                            Button { path.append(AppRoute.profile(id)) } label: { Label { Text("My profile") } icon: { Lucide("user", size: 16) } }
                         }
-                        Button { path.append(AppRoute.search) } label: { Label("Search", systemImage: "magnifyingglass") }
-                        Button { path.append(AppRoute.news) } label: { Label("News", systemImage: "newspaper") }
-                        Button { path.append(AppRoute.files) } label: { Label("Files", systemImage: "folder") }
-                        Button { path.append(AppRoute.saved) } label: { Label("Saved", systemImage: "bookmark") }
-                        Button { path.append(AppRoute.directory) } label: { Label("People", systemImage: "person.3") }
-                        Button { path.append(AppRoute.groups) } label: { Label("Groups", systemImage: "person.2") }
-                        Button { path.append(AppRoute.settings) } label: { Label("Settings", systemImage: "gear") }
+                        Button { path.append(AppRoute.search) } label: { Label { Text("Search") } icon: { Lucide("search", size: 16) } }
+                        Button { path.append(AppRoute.news) } label: { Label { Text("News") } icon: { Lucide("newspaper", size: 16) } }
+                        Button { path.append(AppRoute.files) } label: { Label { Text("Files") } icon: { Lucide("folder-closed", size: 16) } }
+                        Button { path.append(AppRoute.saved) } label: { Label { Text("Saved") } icon: { Lucide("bookmark", size: 16) } }
+                        Button { path.append(AppRoute.directory) } label: { Label { Text("People") } icon: { Lucide("users", size: 16) } }
+                        Button { path.append(AppRoute.groups) } label: { Label { Text("Groups") } icon: { Lucide("users-round", size: 16) } }
+                        Button { path.append(AppRoute.settings) } label: { Label { Text("Settings") } icon: { Lucide("settings", size: 16) } }
                     } label: {
-                        Image(systemName: "line.3.horizontal")
+                        Lucide("menu")
                     }
                 }
                 ToolbarItem(placement: .topBarTrailing) {
-                    Button { showComposer = true } label: { Image(systemName: "square.and.pencil") }
+                    Button { showComposer = true } label: { Lucide("square-pen") }
                 }
             }
             .sheet(isPresented: $showComposer) {
@@ -131,13 +131,13 @@ private struct ComposerView: View {
             VStack(spacing: 0) {
                 HStack {
                     Menu {
-                        Button { audience = "COMPANY" } label: { Label("Everyone", systemImage: "globe") }
-                        Button { audience = "PRIVATE" } label: { Label("Only me", systemImage: "lock") }
-                        Button { audience = "PEOPLE" } label: { Label("Specific people", systemImage: "person.crop.circle") }
+                        Button { audience = "COMPANY" } label: { Label { Text("Everyone") } icon: { Lucide("globe", size: 16) } }
+                        Button { audience = "PRIVATE" } label: { Label { Text("Only me") } icon: { Lucide("lock", size: 16) } }
+                        Button { audience = "PEOPLE" } label: { Label { Text("Specific people") } icon: { Lucide("circle-user", size: 16) } }
                         if !groups.isEmpty {
                             Divider()
                             ForEach(groups) { group in
-                                Button { audience = "group:\(group.id)" } label: { Label(group.name, systemImage: "person.2") }
+                                Button { audience = "group:\(group.id)" } label: { Label { Text(group.name) } icon: { Lucide("users-round", size: 16) } }
                             }
                         }
                     } label: {
@@ -145,7 +145,7 @@ private struct ComposerView: View {
                     }
                     Spacer()
                     PhotosPicker(selection: $pickerItems, maxSelectionCount: 4, matching: .images) {
-                        Image(systemName: "photo.on.rectangle")
+                        Lucide("image")
                     }
                 }
                 .padding(.horizontal).padding(.top, 8)
@@ -229,7 +229,7 @@ private struct ComposerView: View {
                             HStack(spacing: 4) {
                                 Text(person.name).font(.caption)
                                 Button { selectedPeople.removeAll { $0.id == person.id } } label: {
-                                    Image(systemName: "xmark.circle.fill").foregroundStyle(.secondary)
+                                    Lucide("x").foregroundStyle(.secondary)
                                 }
                             }
                             .padding(.horizontal, 8).padding(.vertical, 4)
@@ -252,7 +252,7 @@ private struct ComposerView: View {
                         AvatarView(name: person.name, url: person.avatarUrl, size: 28)
                         Text(person.name).font(.subheadline)
                         Spacer()
-                        Image(systemName: "plus.circle").foregroundStyle(.tint)
+                        Lucide("circle-plus").foregroundStyle(.tint)
                     }
                 }
                 .buttonStyle(.plain)
@@ -278,7 +278,7 @@ struct ContentUnavailableViewCompat: View {
     let message: String
     var body: some View {
         VStack(spacing: 8) {
-            Image(systemName: "exclamationmark.triangle").font(.largeTitle).foregroundStyle(.secondary)
+            Lucide("triangle-alert").font(.largeTitle).foregroundStyle(.secondary)
             Text(title).font(.headline)
             Text(message).font(.subheadline).foregroundStyle(.secondary).multilineTextAlignment(.center)
         }

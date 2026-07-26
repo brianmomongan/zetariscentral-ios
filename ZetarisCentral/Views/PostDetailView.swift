@@ -130,7 +130,7 @@ struct PostDetailView: View {
                                     VideoPlayerView(url: url).frame(height: 220).clipShape(RoundedRectangle(cornerRadius: 12))
                                     if post.mediaItems?.contains(where: { $0.type == "VIDEO" }) == true {
                                         Button { openViewer(index: mediaIndex(video: i, post: post)) } label: {
-                                            Label("Comment on this video", systemImage: "bubble.left")
+                                            Label { Text("Comment on this video") } icon: { Lucide("message-circle", size: 16) }
                                         }
                                         .font(.caption)
                                     }
@@ -156,9 +156,9 @@ struct PostDetailView: View {
             if let post = model.post, post.author.id == auth.currentUser?.id {
                 ToolbarItem(placement: .topBarTrailing) {
                     Menu {
-                        Button { model.editText = post.content; model.editing = true } label: { Label("Edit", systemImage: "pencil") }
-                        Button(role: .destructive) { showDelete = true } label: { Label("Delete", systemImage: "trash") }
-                    } label: { Image(systemName: "ellipsis") }
+                        Button { model.editText = post.content; model.editing = true } label: { Label { Text("Edit") } icon: { Lucide("pencil", size: 16) } }
+                        Button(role: .destructive) { showDelete = true } label: { Label { Text("Delete") } icon: { Lucide("trash-2", size: 16) } }
+                    } label: { Lucide("ellipsis") }
                 }
             }
         }
@@ -246,7 +246,7 @@ private struct ActionBar: View {
                 Label("\(post.reactions.total)", systemImage: post.reactions.mine != nil ? "hand.thumbsup.fill" : "hand.thumbsup")
                     .foregroundStyle(post.reactions.mine != nil ? Color.accentColor : Color.secondary)
             }
-            Label("\(post.commentCount)", systemImage: "bubble.left")
+            Label { Text("\(post.commentCount)") } icon: { Lucide("message-circle", size: 16) }
             Spacer()
             Button { Task { await model.toggleBookmark() } } label: {
                 Image(systemName: post.bookmarkedByMe ? "bookmark.fill" : "bookmark")
@@ -346,7 +346,7 @@ private struct CommentComposer: View {
             Button {
                 Task { await model.addComment() }
             } label: {
-                Image(systemName: "arrow.up.circle.fill").font(.title2)
+                Lucide("send").font(.title2)
             }
             .disabled(model.commentText.trimmingCharacters(in: .whitespaces).isEmpty || model.sending)
         }
