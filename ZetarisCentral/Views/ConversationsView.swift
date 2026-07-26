@@ -32,14 +32,12 @@ struct ConversationsView: View {
                     )
                 } else {
                     List(model.conversations) { convo in
-                        NavigationLink(value: convo.id) {
+                        NavigationLink(value: AppRoute.conversation(convo.id)) {
                             ConversationRow(convo: convo)
                         }
                     }
                     .listStyle(.plain)
-                    .navigationDestination(for: String.self) { id in
-                        ConversationView(conversationId: id)
-                    }
+                    .navigationDestination(for: AppRoute.self) { destinationView(for: $0) }
                     .refreshable { await model.load() }
                 }
             }

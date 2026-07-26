@@ -1,11 +1,5 @@
 import SwiftUI
 
-/// Routes for the Spaces tab's navigation stack.
-enum SpaceRoute: Hashable {
-    case space(String) // slug
-    case post(String)  // post id
-}
-
 @MainActor
 final class SpacesViewModel: ObservableObject {
     @Published var spaces: [SpaceSummary] = []
@@ -38,17 +32,12 @@ struct SpacesView: View {
                     )
                 } else {
                     List(model.spaces) { space in
-                        NavigationLink(value: SpaceRoute.space(space.slug)) {
+                        NavigationLink(value: AppRoute.space(space.slug)) {
                             SpaceListRow(space: space)
                         }
                     }
                     .listStyle(.plain)
-                    .navigationDestination(for: SpaceRoute.self) { route in
-                        switch route {
-                        case .space(let slug): SpaceDetailView(slug: slug)
-                        case .post(let id): PostDetailView(postId: id)
-                        }
-                    }
+                    .navigationDestination(for: AppRoute.self) { destinationView(for: $0) }
                     .refreshable { await model.load() }
                 }
             }

@@ -61,7 +61,7 @@ struct SpaceDetailView: View {
                             Text("No posts in this space yet.").font(.subheadline).foregroundStyle(.secondary)
                         } else {
                             ForEach(data.posts) { post in
-                                NavigationLink(value: SpaceRoute.post(post.id)) {
+                                NavigationLink(value: AppRoute.post(post.id)) {
                                     PostRow(post: post)
                                 }
                             }

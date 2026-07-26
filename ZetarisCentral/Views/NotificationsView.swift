@@ -1,11 +1,5 @@
 import SwiftUI
 
-/// Where a notification navigates when tapped.
-enum NotificationRoute: Hashable {
-    case post(String)
-    case conversation(String)
-}
-
 @MainActor
 final class NotificationsViewModel: ObservableObject {
     @Published var notifications: [AppNotification] = []
@@ -40,19 +34,10 @@ struct NotificationsView: View {
                     )
                 } else {
                     List(model.notifications) { note in
-                        if let route = route(for: note) {
-                            NavigationLink(value: route) { NotificationRow(note: note) }
-                        } else {
-                            NotificationRow(note: note)
-                        }
+                        NavigationLink(value: route(for: note)) { NotificationRow(note: note) }
                     }
                     .listStyle(.plain)
-                    .navigationDestination(for: NotificationRoute.self) { route in
-                        switch route {
-                        case .post(let id): PostDetailView(postId: id)
-                        case .conversation(let id): ConversationView(conversationId: id)
-                        }
-                    }
+                    .navigationDestination(for: AppRoute.self) { destinationView(for: $0) }
                     .refreshable { await model.load() }
                 }
             }
@@ -61,10 +46,10 @@ struct NotificationsView: View {
         }
     }
 
-    private func route(for note: AppNotification) -> NotificationRoute? {
+    private func route(for note: AppNotification) -> AppRoute {
         if let postId = note.postId { return .post(postId) }
         if let convoId = note.conversationId { return .conversation(convoId) }
-        return nil
+        return .profile(note.actor.id) // FOLLOW / other actor-centric notifications
     }
 }
 

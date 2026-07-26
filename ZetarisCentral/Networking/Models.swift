@@ -249,6 +249,35 @@ struct SpaceDetailResponse: Codable {
     let events: [EventSummary]
 }
 
+// MARK: - Profile
+
+struct Profile: Codable {
+    let id: String
+    let name: String
+    let username: String?
+    let title: String?
+    let bio: String?
+    let department: String?
+    let team: String?
+    let location: String?
+    let avatarUrl: String?
+    let startDate: Date?
+    let postCount: Int
+    let followerCount: Int
+    let followingCount: Int
+    let isFollowing: Bool
+    let isMe: Bool
+}
+
+struct ProfileResponse: Codable {
+    let profile: Profile
+    let posts: [Post]
+}
+
+struct FollowResponse: Codable {
+    let following: Bool
+}
+
 struct CreatedPost: Codable {
     let id: String
     let content: String

@@ -44,15 +44,13 @@ struct FeedView: View {
                     ContentUnavailableViewCompat(title: "Couldn't load", message: error)
                 } else {
                     List(model.posts) { post in
-                        NavigationLink(value: post.id) {
+                        NavigationLink(value: AppRoute.post(post.id)) {
                             PostRow(post: post)
                         }
                         .listRowSeparator(.hidden)
                     }
                     .listStyle(.plain)
-                    .navigationDestination(for: String.self) { postId in
-                        PostDetailView(postId: postId)
-                    }
+                    .navigationDestination(for: AppRoute.self) { destinationView(for: $0) }
                     .refreshable { await model.load() }
                 }
             }
@@ -60,6 +58,13 @@ struct FeedView: View {
             .toolbar {
                 ToolbarItem(placement: .topBarLeading) {
                     Button("Sign out") { auth.logout() }
+                }
+                ToolbarItem(placement: .topBarTrailing) {
+                    if let id = auth.currentUser?.id {
+                        NavigationLink(value: AppRoute.profile(id)) {
+                            Image(systemName: "person.circle")
+                        }
+                    }
                 }
                 ToolbarItem(placement: .topBarTrailing) {
                     Button { showComposer = true } label: { Image(systemName: "square.and.pencil") }

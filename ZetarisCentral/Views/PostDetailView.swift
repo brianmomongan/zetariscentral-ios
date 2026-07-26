@@ -101,11 +101,16 @@ private struct PostHeader: View {
     let post: Post
     var body: some View {
         HStack(spacing: 10) {
-            AvatarView(name: post.author.name, url: post.author.avatarUrl)
-            VStack(alignment: .leading, spacing: 1) {
-                Text(post.author.name).font(.subheadline.weight(.semibold))
-                Text(post.createdAt, style: .relative).font(.caption).foregroundStyle(.secondary)
+            NavigationLink(value: AppRoute.profile(post.author.id)) {
+                HStack(spacing: 10) {
+                    AvatarView(name: post.author.name, url: post.author.avatarUrl)
+                    VStack(alignment: .leading, spacing: 1) {
+                        Text(post.author.name).font(.subheadline.weight(.semibold))
+                        Text(post.createdAt, style: .relative).font(.caption).foregroundStyle(.secondary)
+                    }
+                }
             }
+            .buttonStyle(.plain)
             Spacer()
         }
     }
@@ -184,7 +189,10 @@ private struct CommentRow: View {
     @ObservedObject var model: PostDetailViewModel
     var body: some View {
         HStack(alignment: .top, spacing: 10) {
-            AvatarView(name: comment.author.name, url: comment.author.avatarUrl, size: 32)
+            NavigationLink(value: AppRoute.profile(comment.author.id)) {
+                AvatarView(name: comment.author.name, url: comment.author.avatarUrl, size: 32)
+            }
+            .buttonStyle(.plain)
             VStack(alignment: .leading, spacing: 3) {
                 VStack(alignment: .leading, spacing: 2) {
                     Text(comment.author.name).font(.subheadline.weight(.semibold))
