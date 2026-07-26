@@ -14,9 +14,28 @@ struct ZetarisCentralApp: App {
                         TabRouter.shared.selection = n
                         return
                     }
-                    if url.host == "open", url.lastPathComponent == "files" {
+                    if url.host == "open" {
+                        let q = URLComponents(url: url, resolvingAgainstBaseURL: false)?
+                            .queryItems?.first(where: { $0.name == "q" })?.value ?? ""
+                        let route: AppRoute?
+                        switch url.lastPathComponent {
+                        case "files": route = .files
+                        case "search": route = .search
+                        case "directory", "people": route = .directory
+                        case "saved": route = .saved
+                        case "news": route = .news
+                        default: route = nil
+                        }
+                        if let route {
+                            TabRouter.shared.selection = 0
+                            TabRouter.shared.seedQuery = q
+                            TabRouter.shared.pendingRoute = route
+                        }
+                        return
+                    }
+                    if url.host == "feed" {
                         TabRouter.shared.selection = 0
-                        TabRouter.shared.openFilesNonce += 1
+                        TabRouter.shared.pendingFilter = url.lastPathComponent
                         return
                     }
                     guard url.host == "auth" else { return }

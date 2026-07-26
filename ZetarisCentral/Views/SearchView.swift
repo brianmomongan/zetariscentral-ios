@@ -72,5 +72,9 @@ struct SearchView: View {
         .onChange(of: model.query) { q in
             if q.isEmpty { model.posts = []; model.people = [] }
         }
+        .onAppear {
+            let seed = TabRouter.shared.seedQuery
+            if !seed.isEmpty { TabRouter.shared.seedQuery = ""; model.query = seed; Task { await model.run() } }
+        }
     }
 }

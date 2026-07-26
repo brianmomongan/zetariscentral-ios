@@ -118,7 +118,11 @@ struct DirectoryView: View {
         .searchable(text: $query)
         .onChange(of: query) { _ in Task { await load() } }
         .navigationTitle("People")
-        .task { await load() }
+        .task {
+            let seed = TabRouter.shared.seedQuery
+            if !seed.isEmpty { TabRouter.shared.seedQuery = ""; query = seed }
+            await load()
+        }
     }
 
     private func load() async {

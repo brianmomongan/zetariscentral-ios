@@ -5,8 +5,12 @@ import SwiftUI
 final class TabRouter: ObservableObject {
     static let shared = TabRouter()
     @Published var selection = 0
-    /// Bumped by `zetariscentral://open/files` so the Feed tab pushes Files.
-    @Published var openFilesNonce = 0
+    /// Deep-link routing onto the Feed tab's navigation stack.
+    /// `zetariscentral://open/<search|files|directory|saved|news>[?q=…]`
+    /// `zetariscentral://feed/<foryou|following>`
+    @Published var pendingRoute: AppRoute? = nil
+    @Published var pendingFilter: String? = nil
+    @Published var seedQuery = ""
 }
 
 struct RootView: View {
