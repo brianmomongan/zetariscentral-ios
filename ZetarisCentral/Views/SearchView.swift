@@ -1,6 +1,6 @@
 import SwiftUI
 
-private struct PersonLite: Codable, Identifiable {
+struct PersonLite: Codable, Identifiable {
     let id: String
     let name: String
     let username: String?
