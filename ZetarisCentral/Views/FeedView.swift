@@ -8,12 +8,14 @@ final class FeedViewModel: ObservableObject {
     @Published var groups: [GroupSummary] = []
     @Published var isLoading = false
     @Published var errorMessage: String?
+    @Published var filter = "foryou"
 
     func load() async {
         isLoading = posts.isEmpty
         errorMessage = nil
         do {
-            let res: FeedResponse = try await APIClient.shared.get("/feed")
+            let path = filter == "following" ? "/feed?filter=following" : "/feed"
+            let res: FeedResponse = try await APIClient.shared.get(path)
             posts = res.posts
         } catch {
             errorMessage = (error as? LocalizedError)?.errorDescription ?? "Couldn't load the feed."
@@ -43,23 +45,36 @@ struct FeedView: View {
 
     var body: some View {
         NavigationStack(path: $path) {
-            Group {
-                if model.isLoading {
-                    ProgressView()
-                } else if let error = model.errorMessage, model.posts.isEmpty {
-                    ContentUnavailableViewCompat(title: "Couldn't load", message: error)
-                } else {
-                    List(model.posts) { post in
-                        NavigationLink(value: AppRoute.post(post.id)) {
-                            PostRow(post: post)
+            VStack(spacing: 0) {
+                Picker("Feed", selection: $model.filter) {
+                    Text("For you").tag("foryou")
+                    Text("Following").tag("following")
+                }
+                .pickerStyle(.segmented)
+                .padding(.horizontal).padding(.vertical, 6)
+                .onChange(of: model.filter) { _ in Task { model.posts = []; await model.load() } }
+
+                Group {
+                    if model.isLoading {
+                        ProgressView().frame(maxWidth: .infinity, maxHeight: .infinity)
+                    } else if let error = model.errorMessage, model.posts.isEmpty {
+                        ContentUnavailableViewCompat(title: "Couldn't load", message: error)
+                    } else if model.posts.isEmpty {
+                        EmptyStateView(title: model.filter == "following" ? "No posts from people you follow." : "No posts yet.",
+                                       subtitle: model.filter == "following" ? "Follow people to see their posts here." : "Tap the pencil to share something.")
+                    } else {
+                        List(model.posts) { post in
+                            NavigationLink(value: AppRoute.post(post.id)) {
+                                PostRow(post: post)
+                            }
+                            .listRowSeparator(.hidden)
                         }
-                        .listRowSeparator(.hidden)
+                        .listStyle(.plain)
+                        .refreshable { await model.load() }
                     }
-                    .listStyle(.plain)
-                    .navigationDestination(for: AppRoute.self) { destinationView(for: $0) }
-                    .refreshable { await model.load() }
                 }
             }
+            .navigationDestination(for: AppRoute.self) { destinationView(for: $0) }
             .navigationTitle("Home")
             .toolbar {
                 ToolbarItem(placement: .topBarLeading) {
@@ -70,6 +85,8 @@ struct FeedView: View {
                         Button { path.append(AppRoute.search) } label: { Label("Search", systemImage: "magnifyingglass") }
                         Button { path.append(AppRoute.news) } label: { Label("News", systemImage: "newspaper") }
                         Button { path.append(AppRoute.files) } label: { Label("Files", systemImage: "folder") }
+                        Button { path.append(AppRoute.saved) } label: { Label("Saved", systemImage: "bookmark") }
+                        Button { path.append(AppRoute.directory) } label: { Label("People", systemImage: "person.3") }
                         Button { path.append(AppRoute.groups) } label: { Label("Groups", systemImage: "person.2") }
                         Button { path.append(AppRoute.settings) } label: { Label("Settings", systemImage: "gear") }
                     } label: {

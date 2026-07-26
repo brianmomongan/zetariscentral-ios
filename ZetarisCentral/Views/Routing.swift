@@ -15,6 +15,9 @@ enum AppRoute: Hashable {
     case settings              // edit profile
     case search                // search screen
     case files                 // files browser
+    case saved                 // bookmarked posts
+    case directory             // people directory
+    case tag(String)           // hashtag
 }
 
 @ViewBuilder
@@ -31,5 +34,8 @@ func destinationView(for route: AppRoute) -> some View {
     case .settings: SettingsView()
     case .search: SearchView()
     case .files: FilesView()
+    case .saved: SavedView()
+    case .directory: DirectoryView()
+    case .tag(let tag): TagView(tag: tag)
     }
 }
