@@ -47,6 +47,12 @@ struct LinkCard: Codable {
     let domain: String?
 }
 
+struct MediaItem: Codable, Identifiable, Hashable {
+    let id: String
+    let url: String
+    let type: String   // IMAGE | VIDEO
+}
+
 struct Post: Codable, Identifiable {
     let id: String
     let content: String
@@ -55,6 +61,7 @@ struct Post: Codable, Identifiable {
     let author: Author
     let images: [String]
     let videos: [String]
+    let mediaItems: [MediaItem]?
     let link: LinkCard?
     let audience: Audience?
     let pinned: Bool

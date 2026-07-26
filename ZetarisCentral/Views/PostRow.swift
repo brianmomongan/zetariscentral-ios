@@ -85,7 +85,7 @@ struct AvatarView: View {
 
     var body: some View {
         Group {
-            if let url, let u = URL(string: url) {
+            if let url, !url.isEmpty, let u = Config.mediaURL(url) {
                 AsyncImage(url: u) { image in
                     image.resizable().scaledToFill()
                 } placeholder: {

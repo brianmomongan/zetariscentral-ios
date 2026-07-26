@@ -4,11 +4,14 @@ struct RootView: View {
     @EnvironmentObject private var auth: AuthViewModel
 
     var body: some View {
-        if auth.isAuthenticated {
-            MainTabView()
-        } else {
-            LoginView()
+        Group {
+            if auth.isAuthenticated {
+                MainTabView()
+            } else {
+                LoginView()
+            }
         }
+        .tint(Theme.sky)
     }
 }
 
