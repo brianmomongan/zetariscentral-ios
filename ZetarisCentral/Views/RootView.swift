@@ -5,6 +5,8 @@ import SwiftUI
 final class TabRouter: ObservableObject {
     static let shared = TabRouter()
     @Published var selection = 0
+    /// Bumped by `zetariscentral://open/files` so the Feed tab pushes Files.
+    @Published var openFilesNonce = 0
 }
 
 struct RootView: View {

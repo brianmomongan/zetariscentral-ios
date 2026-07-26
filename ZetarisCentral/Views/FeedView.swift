@@ -40,6 +40,7 @@ final class FeedViewModel: ObservableObject {
 struct FeedView: View {
     @EnvironmentObject private var auth: AuthViewModel
     @StateObject private var model = FeedViewModel()
+    @ObservedObject private var router = TabRouter.shared
     @State private var showComposer = false
     @State private var path = NavigationPath()
 
@@ -75,6 +76,7 @@ struct FeedView: View {
                 }
             }
             .navigationDestination(for: AppRoute.self) { destinationView(for: $0) }
+            .onChange(of: router.openFilesNonce) { _ in path.append(AppRoute.files) }
             .navigationTitle("Home")
             .toolbar {
                 ToolbarItem(placement: .topBarLeading) {

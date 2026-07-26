@@ -130,8 +130,12 @@ struct APIClient {
     private func request<T: Decodable, B: Encodable>(
         _ path: String, method: String, body: B?, auth: Bool
     ) async throws -> T {
-        var url = Config.apiBaseURL
-        url.append(path: path)
+        // NOTE: build the URL by string concatenation, NOT URL.append(path:) —
+        // the latter percent-encodes "?" and "=", which silently breaks every
+        // query-string endpoint (files?drive=, feed?filter=, search?q=, …).
+        guard let url = URL(string: Config.apiBaseURL.absoluteString + path) else {
+            throw APIError.transport("Invalid URL for \(path)")
+        }
         var req = URLRequest(url: url)
         req.httpMethod = method
         if let body {
