@@ -2,6 +2,7 @@ import SwiftUI
 
 struct RootView: View {
     @EnvironmentObject private var auth: AuthViewModel
+    @AppStorage("theme_mode") private var themeMode = "system"
 
     var body: some View {
         Group {
@@ -12,6 +13,7 @@ struct RootView: View {
             }
         }
         .tint(Theme.sky)
+        .preferredColorScheme(themeMode == "light" ? .light : themeMode == "dark" ? .dark : nil)
     }
 }
 

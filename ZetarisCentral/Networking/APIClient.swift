@@ -62,6 +62,11 @@ struct APIClient {
     }
 
     @discardableResult
+    func delete<T: Decodable, B: Encodable>(_ path: String, body: B, auth: Bool = true) async throws -> T {
+        try await request(path, method: "DELETE", body: body, auth: auth)
+    }
+
+    @discardableResult
     func patch<T: Decodable, B: Encodable>(_ path: String, body: B, auth: Bool = true) async throws -> T {
         try await request(path, method: "PATCH", body: body, auth: auth)
     }
