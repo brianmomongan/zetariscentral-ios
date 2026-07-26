@@ -234,19 +234,60 @@ struct RsvpCounts: Codable {
     let NO: Int
 }
 
-struct EventSummary: Codable, Identifiable {
+struct SpaceRef: Codable {
+    let slug: String
+    let name: String
+}
+
+struct EventListItem: Codable, Identifiable {
     let id: String
     let title: String
-    let startAt: Date
+    let description: String?
     let location: String?
+    let startAt: Date
+    let endAt: Date?
+    let host: Author
+    let isHost: Bool
+    let space: SpaceRef?
     let counts: RsvpCounts
+    let myStatus: String?
+}
+
+struct EventsResponse: Codable {
+    let events: [EventListItem]
+}
+
+struct EventAttendees: Codable {
+    let GOING: [Member]
+    let MAYBE: [Member]
+    let NO: [Member]
+}
+
+struct EventDetail: Codable {
+    let id: String
+    let title: String
+    let description: String?
+    let location: String?
+    let startAt: Date
+    let endAt: Date?
+    let host: Author
+    let isHost: Bool
+    let space: SpaceRef?
+    let canRsvp: Bool
+    let counts: RsvpCounts
+    let myStatus: String?
+    let attendees: EventAttendees
+}
+
+struct EventResponse: Codable {
+    let event: EventDetail
 }
 
 struct SpaceDetailResponse: Codable {
     let space: SpaceDetail
     let posts: [Post]
     let members: [SpaceMemberView]
-    let events: [EventSummary]
+    let events: [EventListItem]
 }
 
 // MARK: - Profile

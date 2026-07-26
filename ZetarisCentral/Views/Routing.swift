@@ -8,6 +8,7 @@ enum AppRoute: Hashable {
     case conversation(String)  // conversation id
     case space(String)         // slug
     case profile(String)       // user id
+    case event(String)         // event id
 }
 
 @ViewBuilder
@@ -17,5 +18,6 @@ func destinationView(for route: AppRoute) -> some View {
     case .conversation(let id): ConversationView(conversationId: id)
     case .space(let slug): SpaceDetailView(slug: slug)
     case .profile(let id): ProfileView(userId: id)
+    case .event(let id): EventDetailView(eventId: id)
     }
 }

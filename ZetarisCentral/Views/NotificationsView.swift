@@ -49,6 +49,7 @@ struct NotificationsView: View {
     private func route(for note: AppNotification) -> AppRoute {
         if let postId = note.postId { return .post(postId) }
         if let convoId = note.conversationId { return .conversation(convoId) }
+        if let eventId = note.eventId { return .event(eventId) }
         return .profile(note.actor.id) // FOLLOW / other actor-centric notifications
     }
 }

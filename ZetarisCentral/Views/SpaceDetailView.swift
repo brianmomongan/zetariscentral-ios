@@ -53,7 +53,11 @@ struct SpaceDetailView: View {
                     }
                     if !data.events.isEmpty {
                         Section("Upcoming events") {
-                            ForEach(data.events) { event in EventRow(event: event) }
+                            ForEach(data.events) { event in
+                                NavigationLink(value: AppRoute.event(event.id)) {
+                                    EventRow(event: event)
+                                }
+                            }
                         }
                     }
                     Section("Posts") {
@@ -131,8 +135,8 @@ private struct SpaceHeader: View {
     }
 }
 
-private struct EventRow: View {
-    let event: EventSummary
+struct EventRow: View {
+    let event: EventListItem
     var body: some View {
         HStack(spacing: 12) {
             VStack(spacing: 0) {
