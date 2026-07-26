@@ -30,10 +30,18 @@ final class NewsViewModel: ObservableObject {
         let _: EmptyResponse? = try? await APIClient.shared.delete("/news/\(id)")
         await load()
     }
+
+    func share(_ note: String, link: String) async {
+        let content = [note.trimmingCharacters(in: .whitespaces), link].filter { !$0.isEmpty }.joined(separator: "\n")
+        struct Body: Encodable { let content: String }
+        let _: CreatePostResponse? = try? await APIClient.shared.post("/posts", body: Body(content: content))
+    }
 }
 
 struct NewsView: View {
     @StateObject private var model = NewsViewModel()
+    @State private var sharing: Article?
+    @State private var shareNote = ""
 
     var body: some View {
         Group {
@@ -65,6 +73,9 @@ struct NewsView: View {
                                         Text(article.title).font(.subheadline.weight(.semibold)).foregroundStyle(.primary)
                                     }
                                 }
+                                .swipeActions {
+                                    Button { sharing = article } label: { Label("Share", systemImage: "square.and.arrow.up") }.tint(.accentColor)
+                                }
                             }
                         }
                     }
@@ -81,6 +92,11 @@ struct NewsView: View {
             TextField("e.g. Artificial Intelligence", text: $model.newTopic)
             Button("Follow") { Task { await model.addTopic() } }
             Button("Cancel", role: .cancel) {}
+        }
+        .alert("Share to feed", isPresented: Binding(get: { sharing != nil }, set: { if !$0 { sharing = nil } })) {
+            TextField("Add a note (optional)", text: $shareNote)
+            Button("Share") { if let a = sharing { Task { await model.share(shareNote, link: a.link); shareNote = ""; sharing = nil } } }
+            Button("Cancel", role: .cancel) { sharing = nil }
         }
         .task { await model.load() }
     }

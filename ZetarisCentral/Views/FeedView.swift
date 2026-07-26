@@ -24,10 +24,10 @@ final class FeedViewModel: ObservableObject {
         if let res: GroupsResponse = try? await APIClient.shared.get("/groups") { groups = res.groups }
     }
 
-    func createPost(_ content: String, visibility: String, groupId: String?, peopleUsernames: [String], media: [MediaRef]) async -> Bool {
-        struct Body: Codable { let content: String; let visibility: String; let groupId: String?; let peopleUsernames: [String]; let media: [MediaRef] }
+    func createPost(_ content: String, visibility: String, groupId: String?, peopleUsernames: [String], media: [MediaRef], isAnnouncement: Bool) async -> Bool {
+        struct Body: Codable { let content: String; let visibility: String; let groupId: String?; let peopleUsernames: [String]; let media: [MediaRef]; let isAnnouncement: Bool }
         do {
-            let _: CreatePostResponse = try await APIClient.shared.post("/posts", body: Body(content: content, visibility: visibility, groupId: groupId, peopleUsernames: peopleUsernames, media: media))
+            let _: CreatePostResponse = try await APIClient.shared.post("/posts", body: Body(content: content, visibility: visibility, groupId: groupId, peopleUsernames: peopleUsernames, media: media, isAnnouncement: isAnnouncement))
             await load()
             return true
         } catch {
@@ -98,8 +98,8 @@ struct FeedView: View {
                 }
             }
             .sheet(isPresented: $showComposer) {
-                ComposerView(groups: model.groups) { content, visibility, groupId, people, media in
-                    let ok = await model.createPost(content, visibility: visibility, groupId: groupId, peopleUsernames: people, media: media)
+                ComposerView(groups: model.groups, isAdmin: auth.currentUser?.role == "ADMIN") { content, visibility, groupId, people, media, announce in
+                    let ok = await model.createPost(content, visibility: visibility, groupId: groupId, peopleUsernames: people, media: media, isAnnouncement: announce)
                     if ok { showComposer = false }
                 }
             }
@@ -110,10 +110,12 @@ struct FeedView: View {
 
 private struct ComposerView: View {
     let groups: [GroupSummary]
-    let onPost: (_ content: String, _ visibility: String, _ groupId: String?, _ people: [String], _ media: [MediaRef]) async -> Void
+    var isAdmin: Bool = false
+    let onPost: (_ content: String, _ visibility: String, _ groupId: String?, _ people: [String], _ media: [MediaRef], _ isAnnouncement: Bool) async -> Void
     @Environment(\.dismiss) private var dismiss
     @State private var text = ""
     @State private var audience = "COMPANY" // COMPANY | PRIVATE | PEOPLE | group:<id>
+    @State private var announce = false
     @State private var posting = false
     @State private var pickerItems: [PhotosPickerItem] = []
     @State private var uploaded: [MediaRef] = []
@@ -149,6 +151,10 @@ private struct ComposerView: View {
 
                 if audience == "PEOPLE" { peoplePicker }
 
+                if isAdmin && audience == "COMPANY" {
+                    Toggle("📣 Post as announcement", isOn: $announce).padding(.horizontal).padding(.top, 4)
+                }
+
                 if uploading || !uploaded.isEmpty {
                     HStack {
                         if uploading { ProgressView() }
@@ -175,7 +181,7 @@ private struct ComposerView: View {
                             : audience.hasPrefix("group:") ? "GROUP" : "COMPANY"
                         let groupId = audience.hasPrefix("group:") ? String(audience.dropFirst(6)) : nil
                         let people = audience == "PEOPLE" ? selectedPeople.compactMap { $0.username } : []
-                        Task { await onPost(text, visibility, groupId, people, uploaded); posting = false }
+                        Task { await onPost(text, visibility, groupId, people, uploaded, isAdmin && audience == "COMPANY" && announce); posting = false }
                     }
                     .disabled((text.trimmingCharacters(in: .whitespacesAndNewlines).isEmpty && uploaded.isEmpty) || posting || uploading)
                 }
