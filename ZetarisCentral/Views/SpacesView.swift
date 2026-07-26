@@ -15,10 +15,21 @@ final class SpacesViewModel: ObservableObject {
         }
         isLoading = false
     }
+
+    func createSpace(name: String, description: String, visibility: String) async {
+        struct Body: Encodable { let name: String; let description: String?; let visibility: String }
+        let _: EmptyResponse? = try? await APIClient.shared.post("/spaces", body: Body(
+            name: name.trimmingCharacters(in: .whitespaces),
+            description: description.isEmpty ? nil : description,
+            visibility: visibility
+        ))
+        await load()
+    }
 }
 
 struct SpacesView: View {
     @StateObject private var model = SpacesViewModel()
+    @State private var showCreate = false
 
     var body: some View {
         NavigationStack {
@@ -42,7 +53,46 @@ struct SpacesView: View {
                 }
             }
             .navigationTitle("Spaces")
+            .toolbar {
+                ToolbarItem(placement: .topBarTrailing) {
+                    Button { showCreate = true } label: { Image(systemName: "plus") }
+                }
+            }
+            .sheet(isPresented: $showCreate) { NewSpaceSheet(model: model) }
             .task { await model.load() }
+        }
+    }
+}
+
+private struct NewSpaceSheet: View {
+    @ObservedObject var model: SpacesViewModel
+    @Environment(\.dismiss) private var dismiss
+    @State private var name = ""
+    @State private var description = ""
+    @State private var isPublic = true
+
+    var body: some View {
+        NavigationStack {
+            Form {
+                TextField("Name", text: $name)
+                TextField("Description (optional)", text: $description, axis: .vertical).lineLimit(2...4)
+                Picker("Visibility", selection: $isPublic) {
+                    Text("Public").tag(true)
+                    Text("Private").tag(false)
+                }
+                .pickerStyle(.segmented)
+            }
+            .navigationTitle("New space")
+            .navigationBarTitleDisplayMode(.inline)
+            .toolbar {
+                ToolbarItem(placement: .cancellationAction) { Button("Cancel") { dismiss() } }
+                ToolbarItem(placement: .confirmationAction) {
+                    Button("Create") {
+                        Task { await model.createSpace(name: name, description: description, visibility: isPublic ? "PUBLIC" : "PRIVATE"); dismiss() }
+                    }
+                    .disabled(name.trimmingCharacters(in: .whitespaces).count < 2)
+                }
+            }
         }
     }
 }

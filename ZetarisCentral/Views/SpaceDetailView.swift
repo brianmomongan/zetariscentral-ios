@@ -32,10 +32,20 @@ final class SpaceDetailViewModel: ObservableObject {
         await load()
         working = false
     }
+
+    func postToSpace(_ content: String) async {
+        guard let id = data?.space.id else { return }
+        let text = content.trimmingCharacters(in: .whitespacesAndNewlines)
+        guard !text.isEmpty else { return }
+        struct Body: Encodable { let content: String; let spaceId: String }
+        let _: CreatePostResponse? = try? await APIClient.shared.post("/posts", body: Body(content: text, spaceId: id))
+        await load()
+    }
 }
 
 struct SpaceDetailView: View {
     @StateObject private var model: SpaceDetailViewModel
+    @State private var composing = false
 
     init(slug: String) {
         _model = StateObject(wrappedValue: SpaceDetailViewModel(slug: slug))
@@ -81,7 +91,40 @@ struct SpaceDetailView: View {
         }
         .navigationTitle(model.data?.space.name ?? "Space")
         .navigationBarTitleDisplayMode(.inline)
+        .toolbar {
+            if model.data?.space.canPost == true {
+                ToolbarItem(placement: .topBarTrailing) {
+                    Button { composing = true } label: { Image(systemName: "square.and.pencil") }
+                }
+            }
+        }
+        .sheet(isPresented: $composing) {
+            SpaceComposerSheet { text in
+                Task { await model.postToSpace(text); composing = false }
+            }
+        }
         .task { await model.load() }
+    }
+}
+
+private struct SpaceComposerSheet: View {
+    let onPost: (String) -> Void
+    @Environment(\.dismiss) private var dismiss
+    @State private var text = ""
+
+    var body: some View {
+        NavigationStack {
+            TextEditor(text: $text).padding(8)
+                .navigationTitle("Post to space")
+                .navigationBarTitleDisplayMode(.inline)
+                .toolbar {
+                    ToolbarItem(placement: .cancellationAction) { Button("Cancel") { dismiss() } }
+                    ToolbarItem(placement: .confirmationAction) {
+                        Button("Post") { onPost(text) }
+                            .disabled(text.trimmingCharacters(in: .whitespaces).isEmpty)
+                    }
+                }
+        }
     }
 }
 
