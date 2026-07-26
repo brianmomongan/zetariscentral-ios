@@ -9,6 +9,11 @@ enum AppRoute: Hashable {
     case space(String)         // slug
     case profile(String)       // user id
     case event(String)         // event id
+    case groups                // groups list
+    case group(String)         // group id
+    case news                  // news screen
+    case settings              // edit profile
+    case search                // search screen
 }
 
 @ViewBuilder
@@ -19,5 +24,10 @@ func destinationView(for route: AppRoute) -> some View {
     case .space(let slug): SpaceDetailView(slug: slug)
     case .profile(let id): ProfileView(userId: id)
     case .event(let id): EventDetailView(eventId: id)
+    case .groups: GroupsView()
+    case .group(let id): GroupDetailView(groupId: id)
+    case .news: NewsView()
+    case .settings: SettingsView()
+    case .search: SearchView()
     }
 }

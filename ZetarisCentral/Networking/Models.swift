@@ -319,6 +319,63 @@ struct FollowResponse: Codable {
     let following: Bool
 }
 
+// MARK: - Groups
+
+struct GroupSummary: Codable, Identifiable {
+    let id: String
+    let name: String
+    let description: String?
+    let memberCount: Int
+    let isOwner: Bool
+}
+
+struct GroupsResponse: Codable {
+    let groups: [GroupSummary]
+}
+
+struct GroupMemberView: Codable, Identifiable {
+    let id: String
+    let name: String
+    let email: String?
+    let username: String?
+    let avatarUrl: String?
+    let isOwner: Bool
+}
+
+struct GroupDetail: Codable {
+    let id: String
+    let name: String
+    let description: String?
+    let ownerId: String
+    let isOwner: Bool
+    let members: [GroupMemberView]
+}
+
+struct GroupResponse: Codable {
+    let group: GroupDetail
+}
+
+// MARK: - News
+
+struct NewsTopic: Codable, Identifiable {
+    let id: String
+    let query: String
+}
+
+struct Article: Codable, Identifiable {
+    let id: String
+    let title: String
+    let link: String
+    let source: String?
+    let publishedAt: Date
+    let topic: String
+}
+
+struct NewsResponse: Codable {
+    let topics: [NewsTopic]
+    let articles: [Article]
+}
+
 struct CreatedPost: Codable {
     let id: String
     let content: String

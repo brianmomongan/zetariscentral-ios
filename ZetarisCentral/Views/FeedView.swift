@@ -3,6 +3,7 @@ import SwiftUI
 @MainActor
 final class FeedViewModel: ObservableObject {
     @Published var posts: [Post] = []
+    @Published var groups: [GroupSummary] = []
     @Published var isLoading = false
     @Published var errorMessage: String?
 
@@ -16,11 +17,13 @@ final class FeedViewModel: ObservableObject {
             errorMessage = (error as? LocalizedError)?.errorDescription ?? "Couldn't load the feed."
         }
         isLoading = false
+        if let res: GroupsResponse = try? await APIClient.shared.get("/groups") { groups = res.groups }
     }
 
-    func createPost(_ content: String) async -> Bool {
+    func createPost(_ content: String, visibility: String, groupId: String?) async -> Bool {
+        struct Body: Codable { let content: String; let visibility: String; let groupId: String? }
         do {
-            let _: CreatePostResponse = try await APIClient.shared.post("/posts", body: ["content": content])
+            let _: CreatePostResponse = try await APIClient.shared.post("/posts", body: Body(content: content, visibility: visibility, groupId: groupId))
             await load()
             return true
         } catch {
@@ -34,9 +37,10 @@ struct FeedView: View {
     @EnvironmentObject private var auth: AuthViewModel
     @StateObject private var model = FeedViewModel()
     @State private var showComposer = false
+    @State private var path = NavigationPath()
 
     var body: some View {
-        NavigationStack {
+        NavigationStack(path: $path) {
             Group {
                 if model.isLoading {
                     ProgressView()
@@ -57,13 +61,16 @@ struct FeedView: View {
             .navigationTitle("Home")
             .toolbar {
                 ToolbarItem(placement: .topBarLeading) {
-                    Button("Sign out") { auth.logout() }
-                }
-                ToolbarItem(placement: .topBarTrailing) {
-                    if let id = auth.currentUser?.id {
-                        NavigationLink(value: AppRoute.profile(id)) {
-                            Image(systemName: "person.circle")
+                    Menu {
+                        if let id = auth.currentUser?.id {
+                            Button { path.append(AppRoute.profile(id)) } label: { Label("My profile", systemImage: "person") }
                         }
+                        Button { path.append(AppRoute.search) } label: { Label("Search", systemImage: "magnifyingglass") }
+                        Button { path.append(AppRoute.news) } label: { Label("News", systemImage: "newspaper") }
+                        Button { path.append(AppRoute.groups) } label: { Label("Groups", systemImage: "person.2") }
+                        Button { path.append(AppRoute.settings) } label: { Label("Settings", systemImage: "gear") }
+                    } label: {
+                        Image(systemName: "line.3.horizontal")
                     }
                 }
                 ToolbarItem(placement: .topBarTrailing) {
@@ -71,8 +78,8 @@ struct FeedView: View {
                 }
             }
             .sheet(isPresented: $showComposer) {
-                ComposerView { content in
-                    let ok = await model.createPost(content)
+                ComposerView(groups: model.groups) { content, visibility, groupId in
+                    let ok = await model.createPost(content, visibility: visibility, groupId: groupId)
                     if ok { showComposer = false }
                 }
             }
@@ -82,30 +89,60 @@ struct FeedView: View {
 }
 
 private struct ComposerView: View {
-    let onPost: (String) async -> Void
+    let groups: [GroupSummary]
+    let onPost: (_ content: String, _ visibility: String, _ groupId: String?) async -> Void
     @Environment(\.dismiss) private var dismiss
     @State private var text = ""
+    @State private var audience = "COMPANY" // COMPANY | PRIVATE | group:<id>
     @State private var posting = false
 
     var body: some View {
         NavigationStack {
-            TextEditor(text: $text)
-                .padding()
-                .navigationTitle("New post")
-                .navigationBarTitleDisplayMode(.inline)
-                .toolbar {
-                    ToolbarItem(placement: .cancellationAction) {
-                        Button("Cancel") { dismiss() }
-                    }
-                    ToolbarItem(placement: .confirmationAction) {
-                        Button("Post") {
-                            posting = true
-                            Task { await onPost(text); posting = false }
+            VStack(spacing: 0) {
+                HStack {
+                    Menu {
+                        Button { audience = "COMPANY" } label: { Label("Everyone", systemImage: "globe") }
+                        Button { audience = "PRIVATE" } label: { Label("Only me", systemImage: "lock") }
+                        if !groups.isEmpty {
+                            Divider()
+                            ForEach(groups) { group in
+                                Button { audience = "group:\(group.id)" } label: { Label(group.name, systemImage: "person.2") }
+                            }
                         }
-                        .disabled(text.trimmingCharacters(in: .whitespacesAndNewlines).isEmpty || posting)
+                    } label: {
+                        Label(audienceLabel, systemImage: audienceIcon).font(.subheadline)
                     }
+                    Spacer()
                 }
+                .padding(.horizontal).padding(.top, 8)
+                TextEditor(text: $text).padding(8)
+            }
+            .navigationTitle("New post")
+            .navigationBarTitleDisplayMode(.inline)
+            .toolbar {
+                ToolbarItem(placement: .cancellationAction) { Button("Cancel") { dismiss() } }
+                ToolbarItem(placement: .confirmationAction) {
+                    Button("Post") {
+                        posting = true
+                        let visibility = audience == "PRIVATE" ? "PRIVATE" : audience.hasPrefix("group:") ? "GROUP" : "COMPANY"
+                        let groupId = audience.hasPrefix("group:") ? String(audience.dropFirst(6)) : nil
+                        Task { await onPost(text, visibility, groupId); posting = false }
+                    }
+                    .disabled(text.trimmingCharacters(in: .whitespacesAndNewlines).isEmpty || posting)
+                }
+            }
         }
+    }
+
+    private var audienceLabel: String {
+        if audience == "PRIVATE" { return "Only me" }
+        if audience.hasPrefix("group:"), let g = groups.first(where: { "group:\($0.id)" == audience }) { return g.name }
+        return "Everyone"
+    }
+    private var audienceIcon: String {
+        if audience == "PRIVATE" { return "lock" }
+        if audience.hasPrefix("group:") { return "person.2" }
+        return "globe"
     }
 }
 
